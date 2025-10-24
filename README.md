@@ -2,6 +2,10 @@
 
 A Python testing project with pytest, Playwright web testing, Allure reporting, and modern development tools.
 
+[![GitHub](https://img.shields.io/badge/GitHub-pintuxik%2Fqa--lab-blue?style=flat-square&logo=github)](https://github.com/pintuxik/qa-lab)
+[![Python](https://img.shields.io/badge/Python-3.14-blue?style=flat-square&logo=python)](https://python.org)
+[![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
+
 ## Prerequisites
 
 ### Install uv (Python package manager)
@@ -56,7 +60,7 @@ choco install allure
 
 1. **Clone the repository:**
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/pintuxik/qa-lab.git
    cd qa-lab
    ```
 
@@ -165,6 +169,12 @@ qa-lab/
 - **ruff**: Fast Python linter and formatter
 - **pre-commit**: Git hooks framework
 
+## Repository
+
+- **GitHub**: [https://github.com/pintuxik/qa-lab](https://github.com/pintuxik/qa-lab)
+- **License**: MIT
+- **Issues**: [Report bugs or request features](https://github.com/pintuxik/qa-lab/issues)
+
 ## Features
 
 - ✅ Python 3.14 support
@@ -175,3 +185,4 @@ qa-lab/
 - ✅ Automated code formatting and linting
 - ✅ Pre-commit hooks for code quality
 - ✅ Modern dependency management with uv
+- ✅ WSL2 compatibility with browser workarounds
