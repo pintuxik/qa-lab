@@ -1,0 +1,28 @@
+[project]
+name = "qa-lab"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "allure-pytest>=2.15.0",
+    "playwright>=1.55.0",
+    "pytest>=8.4.2",
+    "pytest-asyncio>=1.2.0",
+    "pytest-playwright>=0.7.1",
+]
+
+[dependency-groups]
+dev = [
+    "pre-commit>=4.3.0",
+    "ruff>=0.14.2",
+]
+
+[tool.ruff]
+line-length = 120
+select = ["E", "F", "B", "I"]
+ignore = ["E501"]
+exclude = ["tests/resources/*"]
+
+[tool.ruff.format]
+docstring-code-format = true
