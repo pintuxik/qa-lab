@@ -2,12 +2,13 @@
 Global pytest configuration for Playwright testing with Allure integration.
 """
 
-import os
 from typing import Generator
 
 import allure
 import pytest
 from playwright.sync_api import Browser, BrowserContext, Page, sync_playwright
+
+from utils.utils import get_screenshot_path
 
 
 @pytest.fixture(scope="session")
@@ -67,13 +68,8 @@ def screenshot_on_failure(request, page):
     yield
 
     if request.node.rep_call.failed:
-        # Create screenshots directory if it doesn't exist
-        screenshots_dir = "screenshots"
-        os.makedirs(screenshots_dir, exist_ok=True)
-
-        # Generate screenshot filename
         test_name = request.node.name
-        screenshot_path = os.path.join(screenshots_dir, f"{test_name}_failure.png")
+        screenshot_path = get_screenshot_path(f"{test_name}_failure.png")
 
         # Take screenshot
         page.screenshot(path=screenshot_path, full_page=True)

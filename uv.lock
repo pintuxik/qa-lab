@@ -338,7 +338,7 @@ wheels = [
 [[package]]
 name = "qa-lab"
 version = "0.1.0"
-source = { virtual = "." }
+source = { editable = "." }
 dependencies = [
     { name = "allure-pytest" },
     { name = "playwright" },

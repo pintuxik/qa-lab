@@ -69,7 +69,13 @@ choco install allure
    uv sync
    ```
 
-3. **Install pre-commit hooks:**
+3. **Install the project in editable mode:**
+   ```bash
+   uv pip install -e .
+   ```
+   This step is crucial for proper import resolution of the `utils` package in tests.
+
+4. **Install pre-commit hooks:**
    ```bash
    uv run pre-commit install
    ```
@@ -110,16 +116,22 @@ allure generate allure-results -o allure-report --clean
 # Or access via: \\wsl$\Ubuntu\path\to\qa-lab\allure-report\index.html
 ```
 
-**Run Playwright tests:**
+**Run specific test suites:**
 ```bash
-# Run all tests (including Playwright)
+# Run all tests
 uv run pytest -v
 
-# Run only Playwright tests
-uv run pytest tests/test_playwright.py -v
+# Run only UI tests (Playwright)
+uv run pytest tests/ui/ -v
 
-# Run Playwright tests with Allure reports
-uv run pytest tests/test_playwright.py --alluredir=allure-results -v
+# Run only API tests
+uv run pytest tests/api/ -v
+
+# Run specific test file
+uv run pytest tests/ui/test_playwright.py -v
+
+# Run tests with Allure reports
+uv run pytest --alluredir=allure-results -v
 ```
 
 ## Development Tools
@@ -140,23 +152,54 @@ uv run ruff check --fix
 uv run ruff format
 ```
 
+## Troubleshooting
+
+### Import Errors
+
+If you encounter import errors like `ModuleNotFoundError: No module named 'utils'`, ensure you've completed the installation steps:
+
+1. **Reinstall in editable mode:**
+   ```bash
+   uv pip install -e .
+   ```
+
+2. **Verify installation:**
+   ```bash
+   uv run python -c "from utils.utils import get_screenshot_path; print('Import successful')"
+   ```
+
+3. **Check if package is installed:**
+   ```bash
+   uv pip list | grep qa-lab
+   ```
+
+### Browser Issues
+
+- **WSL2 users**: If browsers don't open automatically, use the Allure serve command instead of open
+- **Headless mode**: Set `headless: True` in `tests/ui/conftest.py` for CI/CD environments
+
 ## Project Structure
 
 ```
 qa-lab/
 ├── .gitignore              # Git ignore rules
 ├── .pre-commit-config.yaml # Pre-commit hooks configuration
-├── conftest.py             # Global pytest configuration with Playwright
-├── pytest.ini             # Pytest configuration
 ├── pyproject.toml         # Project configuration and dependencies
 ├── README.md              # This file
+├── main.py                # Main project file
+├── utils/                 # Utility functions package
+│   ├── __init__.py        # Package initialization
+│   └── utils.py           # Utility functions (screenshot paths, etc.)
 ├── tests/                 # Test files
-│   ├── test_sample.py     # Sample tests with Allure annotations
-│   └── test_playwright.py # Playwright web UI tests
+│   ├── api/               # API tests
+│   │   ├── conftest.py    # API test configuration
+│   │   └── test_sample.py  # Sample API tests
+│   └── ui/                # UI tests
+│       ├── conftest.py    # UI test configuration with Playwright
+│       └── test_playwright.py # Playwright web UI tests
 ├── screenshots/           # Screenshots on test failures
 ├── allure-results/        # Allure test results
-├── allure-report/        # Generated Allure reports
-└── main.py                # Main project file
+└── allure-report/        # Generated Allure reports
 ```
 
 ## Dependencies

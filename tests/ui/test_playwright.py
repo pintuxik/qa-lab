@@ -5,6 +5,8 @@ Sample Playwright tests with Allure annotations.
 import allure
 from playwright.sync_api import Page, expect
 
+from utils.utils import get_screenshot_path
+
 
 class TestPlaywrightSample:
     """Sample Playwright test class with Allure annotations."""
@@ -39,10 +41,11 @@ class TestPlaywrightSample:
             expect(page.locator("h1")).to_contain_text("Example Domain")
 
         with allure.step("Take screenshot for verification"):
-            page.screenshot(path="example_page.png", full_page=True)
+            screenshot_path = get_screenshot_path("example_page.png")
+            page.screenshot(path=screenshot_path, full_page=True)
 
             # Attach screenshot to Allure
-            with open("example_page.png", "rb") as f:
+            with open(screenshot_path, "rb") as f:
                 allure.attach(f.read(), name="Example page screenshot", attachment_type=allure.attachment_type.PNG)
 
     @allure.feature("Web UI Testing")
