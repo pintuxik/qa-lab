@@ -19,7 +19,7 @@ def browser_type_launch_args():
     headless = os.getenv("HEADLESS", "false").lower() == "true"
     return {
         "headless": headless,  # Set via HEADLESS env var
-        "slow_mo": 500 if not headless else 0,  # Slow down for visibility in headed mode
+        "slow_mo": 300 if not headless else 0,  # Slow down for visibility in headed mode
         "args": ["--no-sandbox", "--disable-dev-shm-usage", "--disable-gpu", "--window-size=1920,1080"],
     }
 

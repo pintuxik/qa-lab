@@ -135,13 +135,20 @@ qa-lab/
 
 3. **Wait for services to start** (first run may take a few minutes)
 
-4. **Access the application:**
+4. **Run tests:** (UI tests are executed in headed mode with slow motion enabled for demonstration purposes.)
+    ```bash
+   # Run all tests (unit + API + UI)
+   chmod +x run_all_tests.sh
+   ./run_all_tests.sh
+   ```
+
+5. **Access the application:**
    - **Frontend**: http://localhost:5000
    - **Backend API**: http://localhost:8000
    - **API Documentation**: http://localhost:8000/docs
    - **Database**: localhost:5432 (postgres/password)
 
-5. **Default admin user:**
+6. **Default admin user:**
    - **Username**: admin
    - **Password**: admin123
    - **Email**: admin@example.com
@@ -190,11 +197,6 @@ This project includes **119 automated tests** with **88% code coverage**, demons
 | **Total** | **119** | **88%** | - |
 
 ### Running Tests
-
-**Important**: Before running UI tests for the first time, install Playwright browsers:
-```bash
-uv run playwright install
-```
 
 ```bash
 # Run all tests (unit + integration)
