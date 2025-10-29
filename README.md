@@ -85,7 +85,9 @@ qa-lab/
 │       └── README.md
 ├── utils/                        # Shared utilities
 │   └── utils.py
-├── docker-compose.yml            # Multi-container orchestration
+├── docker-compose.yml            # Production-like setup (no volumes)
+├── docker-compose.dev.yml        # Development setup (with volumes)
+
 ├── run_all_tests.sh             # Run all 119 tests
 ├── run_api_tests.sh             # Run API integration tests
 ├── run_ui_tests.sh              # Run UI integration tests
@@ -122,8 +124,14 @@ qa-lab/
 
 2. **Start all services:**
    ```bash
+   # Production-like mode (recommended for testing)
    docker-compose up --build
+   
+   # OR Development mode with hot reload
+   docker-compose -f docker-compose.dev.yml up --build
    ```
+   
+   **Note**: Use the default `docker-compose.yml` for running tests to avoid container reload issues. Use `docker-compose.dev.yml` when actively developing and you want code changes to reflect immediately.
 
 3. **Wait for services to start** (first run may take a few minutes)
 
@@ -182,6 +190,11 @@ This project includes **119 automated tests** with **88% code coverage**, demons
 | **Total** | **119** | **88%** | - |
 
 ### Running Tests
+
+**Important**: Before running UI tests for the first time, install Playwright browsers:
+```bash
+uv run playwright install
+```
 
 ```bash
 # Run all tests (unit + integration)
@@ -246,8 +259,11 @@ SECRET_KEY=your-super-secret-key-change-in-production
 # Navigate to the project directory
 cd qa-lab
 
-# Start all services
+# Start all services (production-like, no hot reload)
 docker-compose up
+
+# Start in development mode (with hot reload)
+docker-compose -f docker-compose.dev.yml up
 
 # Start in background
 docker-compose up -d
@@ -264,6 +280,12 @@ docker-compose logs -f
 # Access database
 docker-compose exec db psql -U postgres -d taskmanager
 ```
+
+### Docker Compose Files
+
+- **`docker-compose.yml`** - Production-like setup without volume mounts. Use this for running tests to avoid container reload issues.
+- **`docker-compose.dev.yml`** - Development setup with volume mounts for hot code reloading. Use this when actively developing.
+- **`docker-compose.prod.yml`** - Same as default, provided for clarity.
 
 ## 🗄️ Database Schema
 
@@ -314,6 +336,7 @@ docker-compose exec db psql -U postgres -d taskmanager
 2. **Database connection failed**: Wait for PostgreSQL to fully start
 3. **Frontend can't reach backend**: Check Docker network connectivity
 4. **Permission denied**: Ensure Docker has proper permissions
+5. **Frontend container reloading during tests**: This was caused by volume mounts in docker-compose.yml. The default configuration now uses production-like setup without volume mounts. For development with hot reload, use `docker-compose -f docker-compose.dev.yml up`
 
 ### Logs
 ```bash

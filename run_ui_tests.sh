@@ -50,20 +50,6 @@ check_frontend() {
     fi
 }
 
-# Function to check if Playwright is installed
-check_playwright() {
-    print_info "Checking Playwright installation..."
-    
-    if uv run python -c "import playwright" 2>/dev/null; then
-        print_info "Playwright is installed ✓"
-        return 0
-    else
-        print_error "Playwright is not installed"
-        print_info "Install with: uv sync && uv run playwright install ${BROWSER}"
-        return 1
-    fi
-}
-
 # Function to display usage
 usage() {
     cat << EOF
@@ -150,6 +136,18 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
+# Check if Playwright browsers are already installed to avoid triggering Docker reload
+if [ ! -d "$HOME/.cache/ms-playwright/chromium"* ] 2>/dev/null; then
+    echo "Installing Playwright browsers..."
+    if uv run playwright install ; then
+        echo -e "${GREEN}✓ Playwright browsers installed${NC}"
+    else
+        echo -e "${YELLOW}⚠️  Failed to install Playwright browsers${NC}"
+    fi
+else
+    echo -e "${GREEN}✓ Playwright browsers already installed${NC}"
+fi
+
 # Main execution
 print_info "=== UI Integration Tests ==="
 print_info "Frontend URL: ${FRONTEND_URL}"
@@ -157,10 +155,6 @@ print_info "Test Pattern: ${TEST_PATTERN}"
 print_info "Browser: ${BROWSER}"
 print_info "Headless: ${HEADLESS}"
 
-# Check Playwright installation
-if ! check_playwright; then
-    exit 1
-fi
 
 # Check if frontend is running (unless skipped)
 if [ "$SKIP_CHECK" = false ]; then

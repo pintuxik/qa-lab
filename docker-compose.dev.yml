@@ -1,5 +1,5 @@
-# Production-like configuration (no volume mounts) for runnin all tests.
-# For development with hot reload, use: docker-compose -f docker-compose.dev.yml up
+# Development configuration with volume mounts for hot reload
+# Usage: docker-compose -f docker-compose.dev.yml up
 
 services:
   db:
@@ -29,6 +29,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    volumes:
+      - ./backend:/app
     command: bash start.sh
 
   frontend:
@@ -40,6 +42,8 @@ services:
       - SECRET_KEY=your-super-secret-key-change-in-production
     depends_on:
       - backend
+    volumes:
+      - ./frontend:/app
     command: uv run python app/__init__.py
 
 volumes:
