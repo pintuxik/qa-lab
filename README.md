@@ -1,6 +1,37 @@
 # QA Lab - Task Management System
 
-A full-stack application built with FastAPI (backend) and Flask (frontend) for managing tasks with user authentication and database persistence. This project is designed for comprehensive testing of real-world applications and serves as the QA Lab testing environment.
+[![Tests](https://img.shields.io/badge/tests-119%20passing-brightgreen)](https://github.com/pintuxik/qa-lab)
+[![Coverage](https://img.shields.io/badge/coverage-88%25-green)](https://github.com/pintuxik/qa-lab)
+[![Python](https://img.shields.io/badge/python-3.14-blue)](https://www.python.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.120-009688)](https://fastapi.tiangolo.com/)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
+A production-ready full-stack task management application built with FastAPI (backend) and Flask (frontend), featuring comprehensive automated testing, Docker deployment, and modern development practices. This project demonstrates AI-assisted development and serves as a complete QA testing environment.
+
+**🎯 Key Highlights:**
+- 119 automated tests with 88% code coverage
+- Complete CI/CD automation scripts
+- Docker-ready production deployment
+- RESTful API with OpenAPI documentation
+- Modern responsive UI with Bootstrap 5
+
+## 📋 Table of Contents
+
+- [Architecture](#️-architecture)
+- [Project Structure](#-project-structure)
+- [Features](#-features)
+- [Quick Start](#-quick-start)
+- [Development](#️-development)
+- [Comprehensive Testing](#-comprehensive-testing-suite)
+- [API Endpoints](#-api-endpoints)
+- [Configuration](#-configuration)
+- [Docker Commands](#-docker-commands)
+- [Database Schema](#️-database-schema)
+- [Security Features](#-security-features)
+- [Troubleshooting](#-troubleshooting)
+- [Future Enhancements](#-future-enhancements)
+- [Contributing](#-contributing)
+- [License](#-license)
 
 ## 🏗️ Architecture
 
@@ -16,28 +47,51 @@ A full-stack application built with FastAPI (backend) and Flask (frontend) for m
 
 ```
 qa-lab/
-├── backend/                 # FastAPI backend
+├── backend/                      # FastAPI backend
 │   ├── app/
-│   │   ├── __init__.py
-│   │   ├── main.py         # FastAPI app entry point
-│   │   ├── models/         # SQLAlchemy models
-│   │   ├── schemas/        # Pydantic schemas
-│   │   ├── api/            # API routes
-│   │   ├── core/           # Configuration & security
-│   │   └── database.py     # Database connection
-│   ├── pyproject.toml      # uv dependencies
+│   │   ├── api/                 # API routes (auth, tasks)
+│   │   ├── core/                # Configuration & security
+│   │   ├── models/              # SQLAlchemy models
+│   │   ├── schemas/             # Pydantic schemas
+│   │   ├── main.py              # FastAPI app entry point
+│   │   ├── database.py          # Database connection
+│   │   └── init_db.py           # Database initialization
+│   ├── tests/                   # Backend unit tests (45 tests)
+│   │   ├── test_auth.py
+│   │   ├── test_tasks.py
+│   │   └── test_security.py
+│   ├── pyproject.toml           # Dependencies & config
 │   ├── Dockerfile
-│   ├── start.sh           # Startup script
-│   └── init_db.py         # Database initialization
-├── frontend/               # Flask frontend
+│   └── start.sh
+├── frontend/                     # Flask frontend
 │   ├── app/
-│   │   ├── __init__.py
-│   │   └── templates/      # HTML templates
-│   ├── pyproject.toml      # uv dependencies
+│   │   ├── templates/           # Jinja2 HTML templates
+│   │   ├── routes.py            # Flask routes
+│   │   └── __init__.py
+│   ├── tests/                   # Frontend unit tests (21 tests)
+│   │   └── test_routes.py
+│   ├── pyproject.toml
 │   └── Dockerfile
-├── tests/                  # Test files
-│   └── test_api.py        # Example test script
-├── docker-compose.yml      # Multi-container setup
+├── tests/                        # Integration tests
+│   ├── api/                     # API integration tests (34 tests)
+│   │   ├── test_auth_api.py
+│   │   ├── test_tasks_api.py
+│   │   ├── conftest.py
+│   │   └── README.md
+│   └── ui/                      # UI integration tests (19 tests)
+│       ├── test_auth_ui.py
+│       ├── test_tasks_ui.py
+│       ├── conftest.py
+│       └── README.md
+├── utils/                        # Shared utilities
+│   └── utils.py
+├── docker-compose.yml            # Multi-container orchestration
+├── run_all_tests.sh             # Run all 119 tests
+├── run_api_tests.sh             # Run API integration tests
+├── run_ui_tests.sh              # Run UI integration tests
+├── setup_backend_for_tests.sh   # Automated backend setup
+├── stop_backend.sh              # Stop backend services
+├── TESTING.md                   # Comprehensive testing guide
 └── README.md
 ```
 
@@ -113,39 +167,42 @@ The database is automatically initialized with:
 - Default admin user
 - Proper relationships and constraints
 
-## 🧪 Testing Opportunities
+## 🧪 Comprehensive Testing Suite
 
-This application is perfect for comprehensive testing:
+This project includes **119 automated tests** with **88% code coverage**, demonstrating professional testing practices.
 
-### Unit Tests
-- Test individual functions and models
-- Test authentication logic
-- Test task CRUD operations
-- Test password hashing and JWT generation
+### Test Coverage
 
-### Integration Tests
-- Test API endpoints with real database
-- Test authentication flows
-- Test frontend-backend communication
-- Test database operations
+| Test Type | Count | Coverage | Framework |
+|-----------|-------|----------|-----------|
+| Backend Unit Tests | 45 | 85% | pytest |
+| Frontend Unit Tests | 21 | 91% | pytest |
+| API Integration Tests | 34 | - | pytest + requests |
+| UI Integration Tests | 19 | - | Playwright |
+| **Total** | **119** | **88%** | - |
 
-### End-to-End Tests
-- Test complete user registration flow
-- Test task creation and management
-- Test login/logout functionality
-- Test responsive UI on different devices
+### Running Tests
 
-### Performance Tests
-- Load testing with multiple users
-- Database performance under load
-- API response time testing
-- Frontend performance optimization
+```bash
+# Run all tests (unit + integration)
+./run_all_tests.sh
 
-### Security Tests
-- Test authentication bypass attempts
-- Test SQL injection prevention
-- Test JWT token security
-- Test password strength requirements
+# Run specific test suites
+./run_api_tests.sh              # API integration tests
+./run_ui_tests.sh               # UI tests with Playwright
+cd backend && uv run pytest     # Backend unit tests
+cd frontend && uv run pytest    # Frontend unit tests
+```
+
+### Test Features
+- ✅ Automated test execution scripts
+- ✅ Allure reporting integration
+- ✅ Screenshot capture on UI test failures
+- ✅ Code coverage reports (HTML format)
+- ✅ CI/CD ready configuration
+- ✅ Comprehensive test documentation
+
+See [TESTING.md](TESTING.md) for detailed testing documentation.
 
 ## 📡 API Endpoints
 
@@ -269,13 +326,58 @@ docker-compose logs frontend
 docker-compose logs db
 ```
 
-## 📈 Next Steps for Testing
+## 🚀 Future Enhancements
 
-1. **Set up test frameworks** (pytest, selenium, etc.)
-2. **Create test data fixtures**
-3. **Implement CI/CD pipeline**
-4. **Add monitoring and logging**
-5. **Implement caching**
-6. **Add more complex features** (file uploads, notifications, etc.)
+This is version 1.0 - planned improvements include:
 
-This application provides a solid foundation for learning and testing various aspects of full-stack development!
+### Testing & Quality
+- [ ] Visual regression testing
+- [ ] Performance/load testing with Locust
+- [ ] Security testing (OWASP)
+- [ ] Contract testing for API
+- [ ] Mutation testing
+
+### Features
+- [ ] Real-time notifications (WebSockets)
+- [ ] File attachments for tasks
+- [ ] Task comments and collaboration
+- [ ] Task templates and recurring tasks
+- [ ] Advanced filtering and search
+
+### Architecture
+- [ ] GraphQL API option
+- [ ] Microservices architecture exploration
+- [ ] Caching layer (Redis)
+- [ ] Message queue (RabbitMQ/Celery)
+- [ ] Modern frontend (React/Vue)
+
+### DevOps
+- [ ] GitHub Actions CI/CD pipeline
+- [ ] Kubernetes deployment
+- [ ] Monitoring and logging (Prometheus/Grafana)
+- [ ] API rate limiting
+- [ ] Database migrations with Alembic
+
+## 🤝 Contributing
+
+This is a learning project, but suggestions and feedback are welcome! Feel free to:
+- Open issues for bugs or feature requests
+- Submit pull requests
+- Share your testing approaches
+- Suggest new technologies to explore
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- Built with [Windsurf AI](https://codeium.com/windsurf) coding assistant
+- Demonstrates AI-assisted development practices
+- Inspired by modern full-stack development patterns
+
+---
+
+**⭐ If you find this project helpful, please consider giving it a star!**
+
+This application provides a solid foundation for learning full-stack development, testing practices, and AI-assisted coding!
