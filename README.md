@@ -1,231 +1,281 @@
-# QA Lab
+# QA Lab - Task Management System
 
-A Python testing project with pytest, Playwright web testing, Allure reporting, and modern development tools.
+A full-stack application built with FastAPI (backend) and Flask (frontend) for managing tasks with user authentication and database persistence. This project is designed for comprehensive testing of real-world applications and serves as the QA Lab testing environment.
 
-[![GitHub](https://img.shields.io/badge/GitHub-pintuxik%2Fqa--lab-blue?style=flat-square&logo=github)](https://github.com/pintuxik/qa-lab)
-[![Python](https://img.shields.io/badge/Python-3.14-blue?style=flat-square&logo=python)](https://python.org)
-[![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
+## 🏗️ Architecture
 
-## Prerequisites
+- **Backend**: FastAPI with SQLAlchemy ORM
+- **Frontend**: Flask with Jinja2 templates and Bootstrap
+- **Database**: PostgreSQL with automatic migrations
+- **Authentication**: JWT tokens with secure password hashing
+- **Containerization**: Docker & Docker Compose
+- **UI**: Responsive Bootstrap 5 interface
+- **Package Manager**: uv (ultra-fast Python package manager)
 
-### Install uv (Python package manager)
-
-uv is a fast Python package installer and resolver. Install it using one of these methods:
-
-**Using curl (recommended):**
-```bash
-curl -LsSf https://astral.sh/uv/install.sh | sh
-```
-
-**Using pip:**
-```bash
-pip install uv
-```
-
-**Using pipx:**
-```bash
-pipx install uv
-```
-
-**Using homebrew (macOS):**
-```bash
-brew install uv
-```
-
-### Install Allure
-
-Allure is a flexible lightweight multi-language test report tool. Install it using one of these methods:
-
-**Using npm (recommended):**
-```bash
-npm install -g allure-commandline
-```
-
-**Using scoop (Windows):**
-```bash
-scoop install allure
-```
-
-**Using chocolatey (Windows):**
-```bash
-choco install allure
-```
-
-**Manual installation:**
-1. Download the latest version from [GitHub releases](https://github.com/allure-framework/allure2/releases)
-2. Extract the archive
-3. Add the `bin` directory to your PATH
-
-## Project Setup
-
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/pintuxik/qa-lab.git
-   cd qa-lab
-   ```
-
-2. **Install dependencies:**
-   ```bash
-   uv sync
-   ```
-
-3. **Install the project in editable mode:**
-   ```bash
-   uv pip install -e .
-   ```
-   This step is crucial for proper import resolution of the `utils` package in tests.
-
-4. **Install pre-commit hooks:**
-   ```bash
-   uv run pre-commit install
-   ```
-
-## Running Tests
-
-**Run tests with pytest:**
-```bash
-uv run pytest
-```
-
-**Run tests with verbose output:**
-```bash
-uv run pytest -v
-```
-
-**Generate Allure reports:**
-```bash
-uv run pytest --alluredir=allure-results
-allure serve allure-results
-```
-
-**Generate and open Allure report:**
-```bash
-uv run pytest --alluredir=allure-results
-allure generate allure-results -o allure-report --clean
-allure open allure-report
-```
-
-**For WSL2 users (if browser doesn't open automatically):**
-```bash
-# Option 1: Use serve command (recommended)
-allure serve allure-results
-
-# Option 2: Generate static report and open manually
-allure generate allure-results -o allure-report --clean
-# Then open: /path/to/qa-lab/allure-report/index.html in Windows browser
-# Or access via: \\wsl$\Ubuntu\path\to\qa-lab\allure-report\index.html
-```
-
-**Run specific test suites:**
-```bash
-# Run all tests
-uv run pytest -v
-
-# Run only UI tests (Playwright)
-uv run pytest tests/ui/ -v
-
-# Run only API tests
-uv run pytest tests/api/ -v
-
-# Run specific test file
-uv run pytest tests/ui/test_playwright.py -v
-
-# Run tests with Allure reports
-uv run pytest --alluredir=allure-results -v
-```
-
-## Development Tools
-
-**Run linting:**
-```bash
-uv run ruff check
-```
-
-**Run formatting:**
-```bash
-uv run ruff format
-```
-
-**Run both linting and formatting:**
-```bash
-uv run ruff check --fix
-uv run ruff format
-```
-
-## Troubleshooting
-
-### Import Errors
-
-If you encounter import errors like `ModuleNotFoundError: No module named 'utils'`, ensure you've completed the installation steps:
-
-1. **Reinstall in editable mode:**
-   ```bash
-   uv pip install -e .
-   ```
-
-2. **Verify installation:**
-   ```bash
-   uv run python -c "from utils.utils import get_screenshot_path; print('Import successful')"
-   ```
-
-3. **Check if package is installed:**
-   ```bash
-   uv pip list | grep qa-lab
-   ```
-
-### Browser Issues
-
-- **WSL2 users**: If browsers don't open automatically, use the Allure serve command instead of open
-- **Headless mode**: Set `headless: True` in `tests/ui/conftest.py` for CI/CD environments
-
-## Project Structure
+## 📁 Project Structure
 
 ```
 qa-lab/
-├── .gitignore              # Git ignore rules
-├── .pre-commit-config.yaml # Pre-commit hooks configuration
-├── pyproject.toml         # Project configuration and dependencies
-├── README.md              # This file
-├── main.py                # Main project file
-├── utils/                 # Utility functions package
-│   ├── __init__.py        # Package initialization
-│   └── utils.py           # Utility functions (screenshot paths, etc.)
-├── tests/                 # Test files
-│   ├── api/               # API tests
-│   │   ├── conftest.py    # API test configuration
-│   │   └── test_sample.py  # Sample API tests
-│   └── ui/                # UI tests
-│       ├── conftest.py    # UI test configuration with Playwright
-│       └── test_playwright.py # Playwright web UI tests
-├── screenshots/           # Screenshots on test failures
-├── allure-results/        # Allure test results
-└── allure-report/        # Generated Allure reports
+├── backend/                 # FastAPI backend
+│   ├── app/
+│   │   ├── __init__.py
+│   │   ├── main.py         # FastAPI app entry point
+│   │   ├── models/         # SQLAlchemy models
+│   │   ├── schemas/        # Pydantic schemas
+│   │   ├── api/            # API routes
+│   │   ├── core/           # Configuration & security
+│   │   └── database.py     # Database connection
+│   ├── pyproject.toml      # uv dependencies
+│   ├── Dockerfile
+│   ├── start.sh           # Startup script
+│   └── init_db.py         # Database initialization
+├── frontend/               # Flask frontend
+│   ├── app/
+│   │   ├── __init__.py
+│   │   └── templates/      # HTML templates
+│   ├── pyproject.toml      # uv dependencies
+│   └── Dockerfile
+├── tests/                  # Test files
+│   └── test_api.py        # Example test script
+├── docker-compose.yml      # Multi-container setup
+└── README.md
 ```
 
-## Dependencies
+## ✨ Features
 
-- **pytest**: Testing framework
-- **pytest-asyncio**: Async test support
-- **allure-pytest**: Allure reporting integration
-- **playwright**: Web browser automation
-- **pytest-playwright**: Playwright integration for pytest
-- **ruff**: Fast Python linter and formatter
-- **pre-commit**: Git hooks framework
+- **User Management**: Registration, login, and authentication
+- **Task CRUD**: Create, read, update, and delete tasks
+- **Task Properties**: Title, description, priority, category, completion status
+- **Dashboard**: Statistics and task overview
+- **Responsive UI**: Modern Bootstrap interface
+- **RESTful API**: Complete API with automatic documentation
+- **Database**: PostgreSQL with proper relationships
+- **Security**: JWT authentication and password hashing
 
-## Repository
+## 🚀 Quick Start
 
-- **GitHub**: [https://github.com/pintuxik/qa-lab](https://github.com/pintuxik/qa-lab)
-- **License**: MIT
-- **Issues**: [Report bugs or request features](https://github.com/pintuxik/qa-lab/issues)
+### Prerequisites
+- Docker and Docker Compose installed
+- uv package manager (optional for local development)
+- Git (optional, for cloning)
 
-## Features
+### Running the Application
 
-- ✅ Python 3.14 support
-- ✅ Async test support
-- ✅ Playwright web UI testing with Chrome
-- ✅ Screenshot on test failure
-- ✅ Allure reporting with rich annotations
-- ✅ Automated code formatting and linting
-- ✅ Pre-commit hooks for code quality
-- ✅ Modern dependency management with uv
-- ✅ WSL2 compatibility with browser workarounds
+1. **Navigate to the QA Lab directory:**
+   ```bash
+   cd qa-lab
+   ```
+
+2. **Start all services:**
+   ```bash
+   docker-compose up --build
+   ```
+
+3. **Wait for services to start** (first run may take a few minutes)
+
+4. **Access the application:**
+   - **Frontend**: http://localhost:5000
+   - **Backend API**: http://localhost:8000
+   - **API Documentation**: http://localhost:8000/docs
+   - **Database**: localhost:5432 (postgres/password)
+
+5. **Default admin user:**
+   - **Username**: admin
+   - **Password**: admin123
+   - **Email**: admin@example.com
+
+### First Time Setup
+
+1. Register a new account or use the admin account
+2. Login to access the dashboard
+3. Create your first task using the "Add Task" button
+4. Explore the API documentation at http://localhost:8000/docs
+
+## 🛠️ Development
+
+### Backend Development (FastAPI)
+```bash
+cd qa-lab/backend
+uv sync
+uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+### Frontend Development (Flask)
+```bash
+cd qa-lab/frontend
+uv sync
+uv run python app/__init__.py
+```
+
+### Database Management
+The database is automatically initialized with:
+- Required tables (users, tasks)
+- Default admin user
+- Proper relationships and constraints
+
+## 🧪 Testing Opportunities
+
+This application is perfect for comprehensive testing:
+
+### Unit Tests
+- Test individual functions and models
+- Test authentication logic
+- Test task CRUD operations
+- Test password hashing and JWT generation
+
+### Integration Tests
+- Test API endpoints with real database
+- Test authentication flows
+- Test frontend-backend communication
+- Test database operations
+
+### End-to-End Tests
+- Test complete user registration flow
+- Test task creation and management
+- Test login/logout functionality
+- Test responsive UI on different devices
+
+### Performance Tests
+- Load testing with multiple users
+- Database performance under load
+- API response time testing
+- Frontend performance optimization
+
+### Security Tests
+- Test authentication bypass attempts
+- Test SQL injection prevention
+- Test JWT token security
+- Test password strength requirements
+
+## 📡 API Endpoints
+
+### Authentication
+- `POST /api/auth/register` - User registration
+- `POST /api/auth/login` - User login
+
+### Tasks
+- `GET /api/tasks` - Get user's tasks
+- `POST /api/tasks` - Create new task
+- `GET /api/tasks/{id}` - Get specific task
+- `PUT /api/tasks/{id}` - Update task
+- `DELETE /api/tasks/{id}` - Delete task
+
+### System
+- `GET /` - API status
+- `GET /health` - Health check
+
+## 🔧 Configuration
+
+### Environment Variables
+
+**Backend (.env)**
+```
+DATABASE_URL=postgresql://postgres:password@db:5432/taskmanager
+SECRET_KEY=your-super-secret-key-change-in-production
+ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=30
+FRONTEND_URL=http://localhost:5000
+```
+
+**Frontend (.env)**
+```
+API_BASE_URL=http://backend:8000
+SECRET_KEY=your-super-secret-key-change-in-production
+```
+
+## 🐳 Docker Commands
+
+```bash
+# Navigate to the project directory
+cd qa-lab
+
+# Start all services
+docker-compose up
+
+# Start in background
+docker-compose up -d
+
+# Rebuild and start
+docker-compose up --build
+
+# Stop all services
+docker-compose down
+
+# View logs
+docker-compose logs -f
+
+# Access database
+docker-compose exec db psql -U postgres -d taskmanager
+```
+
+## 🗄️ Database Schema
+
+### Users Table
+- `id` (Primary Key)
+- `email` (Unique)
+- `username` (Unique)
+- `hashed_password`
+- `is_active`
+- `is_admin`
+- `created_at`
+
+### Tasks Table
+- `id` (Primary Key)
+- `title`
+- `description`
+- `is_completed`
+- `priority` (low/medium/high)
+- `category`
+- `created_at`
+- `updated_at`
+- `owner_id` (Foreign Key to Users)
+
+## 🔒 Security Features
+
+- JWT token-based authentication
+- Password hashing with bcrypt
+- CORS protection
+- SQL injection prevention
+- Input validation with Pydantic
+- Secure session management
+
+## 📱 UI Features
+
+- Responsive Bootstrap 5 design
+- Task cards with priority indicators
+- Modal forms for task creation
+- Dropdown menus for task actions
+- Statistics dashboard
+- Flash messages for user feedback
+- Font Awesome icons
+
+## 🚨 Troubleshooting
+
+### Common Issues
+
+1. **Port already in use**: Stop other services using ports 5000, 8000, or 5432
+2. **Database connection failed**: Wait for PostgreSQL to fully start
+3. **Frontend can't reach backend**: Check Docker network connectivity
+4. **Permission denied**: Ensure Docker has proper permissions
+
+### Logs
+```bash
+# View all logs
+docker-compose logs
+
+# View specific service logs
+docker-compose logs backend
+docker-compose logs frontend
+docker-compose logs db
+```
+
+## 📈 Next Steps for Testing
+
+1. **Set up test frameworks** (pytest, selenium, etc.)
+2. **Create test data fixtures**
+3. **Implement CI/CD pipeline**
+4. **Add monitoring and logging**
+5. **Implement caching**
+6. **Add more complex features** (file uploads, notifications, etc.)
+
+This application provides a solid foundation for learning and testing various aspects of full-stack development!

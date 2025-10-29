@@ -14,9 +14,12 @@ from utils.utils import get_screenshot_path
 @pytest.fixture(scope="session")
 def browser_type_launch_args():
     """Configure browser launch arguments for Chrome."""
+    import os
+
+    headless = os.getenv("HEADLESS", "false").lower() == "true"
     return {
-        "headless": False,  # Set to True for headless mode
-        "slow_mo": 1000,  # Slow down operations for better visibility
+        "headless": headless,  # Set via HEADLESS env var
+        "slow_mo": 500 if not headless else 0,  # Slow down for visibility in headed mode
         "args": ["--no-sandbox", "--disable-dev-shm-usage", "--disable-gpu", "--window-size=1920,1080"],
     }
 

@@ -1,0 +1,218 @@
+#!/bin/bash
+#
+# Script to run UI integration tests
+# Usage: ./run_ui_tests.sh [options]
+#
+
+set -e
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+# Default values
+FRONTEND_URL="${FRONTEND_URL:-http://localhost:5000}"
+HEADLESS="${HEADLESS:-false}"
+ALLURE_REPORT="${ALLURE_REPORT:-false}"
+TEST_PATTERN="${TEST_PATTERN:-tests/ui/}"
+BROWSER="${BROWSER:-chromium}"
+
+# Function to print colored output
+print_info() {
+    echo -e "${GREEN}[INFO]${NC} $1"
+}
+
+print_warning() {
+    echo -e "${YELLOW}[WARNING]${NC} $1"
+}
+
+print_error() {
+    echo -e "${RED}[ERROR]${NC} $1"
+}
+
+# Function to check if frontend is running
+check_frontend() {
+    print_info "Checking if frontend is running at ${FRONTEND_URL}..."
+    
+    if curl -sf "${FRONTEND_URL}" > /dev/null 2>&1; then
+        print_info "Frontend is running ✓"
+        return 0
+    else
+        print_warning "Frontend is not accessible at ${FRONTEND_URL}"
+        print_warning "Make sure the frontend is running before running UI tests"
+        echo ""
+        print_info "To start services:"
+        print_info "  docker compose up -d"
+        echo ""
+        return 1
+    fi
+}
+
+# Function to check if Playwright is installed
+check_playwright() {
+    print_info "Checking Playwright installation..."
+    
+    if uv run python -c "import playwright" 2>/dev/null; then
+        print_info "Playwright is installed ✓"
+        return 0
+    else
+        print_error "Playwright is not installed"
+        print_info "Install with: uv sync && uv run playwright install ${BROWSER}"
+        return 1
+    fi
+}
+
+# Function to display usage
+usage() {
+    cat << EOF
+Usage: $0 [OPTIONS]
+
+Run UI integration tests with Playwright
+
+OPTIONS:
+    -h, --help              Show this help message
+    -u, --url URL           Frontend URL (default: http://localhost:5000)
+    -a, --allure            Generate Allure report after tests
+    -t, --test PATTERN      Test pattern to run (default: tests/ui/)
+    -b, --browser BROWSER   Browser to use (chromium/firefox/webkit, default: chromium)
+    --headless              Run in headless mode
+    --headed                Run in headed mode (default)
+    -s, --skip-check        Skip frontend availability check
+    -v, --verbose           Run tests in verbose mode
+
+EXAMPLES:
+    # Run all UI tests
+    $0
+
+    # Run in headless mode
+    $0 --headless
+
+    # Run specific test file
+    $0 --test tests/ui/test_auth_ui.py
+
+    # Run with Allure report
+    $0 --allure
+
+    # Run with custom frontend URL
+    $0 --url http://frontend.example.com:5000
+
+EOF
+    exit 0
+}
+
+# Parse command line arguments
+SKIP_CHECK=false
+VERBOSE=""
+
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        -h|--help)
+            usage
+            ;;
+        -u|--url)
+            FRONTEND_URL="$2"
+            shift 2
+            ;;
+        -a|--allure)
+            ALLURE_REPORT=true
+            shift
+            ;;
+        -t|--test)
+            TEST_PATTERN="$2"
+            shift 2
+            ;;
+        -b|--browser)
+            BROWSER="$2"
+            shift 2
+            ;;
+        --headless)
+            HEADLESS=true
+            shift
+            ;;
+        --headed)
+            HEADLESS=false
+            shift
+            ;;
+        -s|--skip-check)
+            SKIP_CHECK=true
+            shift
+            ;;
+        -v|--verbose)
+            VERBOSE="-v"
+            shift
+            ;;
+        *)
+            print_error "Unknown option: $1"
+            usage
+            ;;
+    esac
+done
+
+# Main execution
+print_info "=== UI Integration Tests ==="
+print_info "Frontend URL: ${FRONTEND_URL}"
+print_info "Test Pattern: ${TEST_PATTERN}"
+print_info "Browser: ${BROWSER}"
+print_info "Headless: ${HEADLESS}"
+
+# Check Playwright installation
+if ! check_playwright; then
+    exit 1
+fi
+
+# Check if frontend is running (unless skipped)
+if [ "$SKIP_CHECK" = false ]; then
+    if ! check_frontend; then
+        print_error "Frontend check failed. Use --skip-check to bypass this check."
+        exit 1
+    fi
+fi
+
+# Export environment variables
+export FRONTEND_URL
+export HEADLESS
+
+# Build pytest command
+PYTEST_CMD="uv run pytest ${TEST_PATTERN} -m ui ${VERBOSE}"
+
+if [ "$ALLURE_REPORT" = true ]; then
+    print_info "Allure reporting enabled"
+    PYTEST_CMD="${PYTEST_CMD} --alluredir=allure-results"
+fi
+
+# Run tests
+print_info "Running UI tests..."
+print_info "Command: ${PYTEST_CMD}"
+echo ""
+
+if eval "${PYTEST_CMD}"; then
+    print_info "Tests completed successfully ✓"
+    EXIT_CODE=0
+else
+    print_error "Tests failed ✗"
+    EXIT_CODE=1
+fi
+
+# Generate Allure report if requested
+if [ "$ALLURE_REPORT" = true ] && [ -d "allure-results" ]; then
+    print_info "Generating Allure report..."
+    
+    if command -v allure &> /dev/null; then
+        allure generate allure-results -o allure-report --clean
+        print_info "Allure report generated in allure-report/"
+        print_info "To view report: allure open allure-report"
+    else
+        print_warning "Allure command not found. Install with: pip install allure-pytest"
+        print_info "You can still view results with: allure serve allure-results"
+    fi
+fi
+
+# Show screenshots location if tests failed
+if [ $EXIT_CODE -ne 0 ] && [ -d "screenshots" ]; then
+    echo ""
+    print_info "Screenshots saved in: screenshots/"
+fi
+
+exit $EXIT_CODE

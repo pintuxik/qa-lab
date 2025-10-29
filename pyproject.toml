@@ -10,6 +10,7 @@ dependencies = [
     "pytest>=8.4.2",
     "pytest-asyncio>=1.2.0",
     "pytest-playwright>=0.7.1",
+    "requests>=2.31.0",
 ]
 
 [build-system]
@@ -27,9 +28,11 @@ dev = [
 
 [tool.ruff]
 line-length = 120
-select = ["E", "F", "B", "I"]
-ignore = ["E501"]
 exclude = ["tests/resources/*"]
+
+[tool.ruff.lint]
+select = ["E", "F", "B", "I"]
+ignore = ["E501", "B008", "B904"]  # B008: function calls in defaults (FastAPI pattern), B904: raise from
 
 [tool.ruff.format]
 docstring-code-format = true
@@ -46,5 +49,6 @@ addopts = [
 ]
 markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
-    "integration: marks tests as integration tests"
+    "integration: marks tests as integration tests",
+    "ui: marks tests as UI integration tests"
 ]
