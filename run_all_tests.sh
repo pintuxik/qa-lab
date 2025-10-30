@@ -54,7 +54,7 @@ cd backend
 echo "Installing dependencies..."
 if uv sync --extra test > /dev/null 2>&1 || uv sync --extra test; then
     echo "Running tests..."
-    if uv run pytest -v; then
+    if uv run pytest -v -n8; then
         echo -e "${GREEN}✅ Backend tests passed!${NC}"
         BACKEND_PASSED=1
     else
@@ -75,7 +75,7 @@ cd frontend
 echo "Installing dependencies..."
 if uv sync --extra test > /dev/null 2>&1 || uv sync --extra test; then
     echo "Running tests..."
-    if uv run pytest -v; then
+    if uv run pytest -v -n8; then
         echo -e "${GREEN}✅ Frontend tests passed!${NC}"
         FRONTEND_PASSED=1
     else

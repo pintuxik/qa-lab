@@ -36,21 +36,36 @@ def api_base_url():
 
 @pytest.fixture(scope="function")
 def api_client(api_base_url):
-    """Provide a requests session for API calls."""
+    """Provide a requests session for API calls with global timeout.
+
+    Default timeout of 10 seconds per repo standards.
+    Can be overridden per request by passing timeout parameter.
+    """
     session = requests.Session()
     # Don't set default Content-Type - let requests handle it based on data type
+
+    # Monkey-patch request methods to apply default timeout (10 seconds)
+    original_request = session.request
+
+    def request_with_timeout(method, url, **kwargs):
+        # Only set timeout if not already specified
+        if "timeout" not in kwargs:
+            kwargs["timeout"] = 10  # 10 seconds
+        return original_request(method, url, **kwargs)
+
+    session.request = request_with_timeout
+
     yield session
     session.close()
 
 
 @pytest.fixture(scope="function")
 def test_user_credentials():
-    """Provide test user credentials."""
-    import random
-    import time
+    """Provide truly unique test user credentials per test."""
+    import uuid
 
-    # Use timestamp + random number for unique identifiers
-    unique_id = f"{int(time.time() * 1000)}_{random.randint(1000, 9999)}"
+    # Use UUID for guaranteed uniqueness across all contexts (parallel, sequential, etc.)
+    unique_id = str(uuid.uuid4())[:8]  # First 8 chars of UUID
     return {
         "username": f"testuser_{unique_id}",
         "email": f"testuser_{unique_id}@example.com",
@@ -102,7 +117,3 @@ def authenticated_client(api_client, auth_token):
     """Provide an authenticated API client."""
     api_client.headers.update({"Authorization": f"Bearer {auth_token}"})
     return api_client
-
-
-# Generate unique test ID for each test run
-pytest.test_id = os.getpid()

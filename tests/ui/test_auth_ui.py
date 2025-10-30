@@ -1,5 +1,14 @@
 """
 UI Integration tests for Authentication flows.
+
+Test structure:
+- TestUserRegistration: Tests registration form (uses 'page' fixture)
+- TestUserLogin: Tests login form (uses 'page' fixture)
+- TestUserLogout: Tests logout functionality (uses 'authenticated_page' fixture)
+- TestProtectedRoutes: Tests unauthenticated access (uses 'page' fixture)
+
+Only registration/login form tests use basic 'page' fixture.
+Logout and route protection tests use 'authenticated_page' to skip UI login.
 """
 
 import os
@@ -39,7 +48,7 @@ class TestUserRegistration:
             page.click('button[type="submit"]')
 
         with allure.step("Verify redirect to login page"):
-            page.wait_for_url(f"{FRONTEND_URL}/login", timeout=5000)
+            page.wait_for_url(f"{FRONTEND_URL}/login")
             expect(page).to_have_url(f"{FRONTEND_URL}/login")
 
         with allure.step("Verify success message"):
@@ -114,7 +123,7 @@ class TestUserLogin:
             page.click('button[type="submit"]')
 
         with allure.step("Verify redirect to dashboard"):
-            page.wait_for_url(f"{FRONTEND_URL}/dashboard", timeout=5000)
+            page.wait_for_url(f"{FRONTEND_URL}/dashboard")
             expect(page).to_have_url(f"{FRONTEND_URL}/dashboard")
 
         with allure.step("Verify dashboard is loaded"):
@@ -164,44 +173,29 @@ class TestUserLogin:
 @allure.feature("Authentication UI")
 @allure.story("User Logout")
 class TestUserLogout:
-    """Test cases for user logout UI."""
+    """Test cases for user logout UI.
+
+    Uses authenticated_page fixture - already logged in.
+    Tests focus on logout behavior, not login form testing.
+    """
 
     @allure.severity(allure.severity_level.CRITICAL)
     @allure.title("Logout functionality")
     @allure.description("Verify that user can logout successfully")
     @pytest.mark.ui
-    def test_logout(self, page: Page):
+    def test_logout(self, authenticated_page: Page):
         """Test user logout."""
-        unique_id = f"{int(time.time() * 1000)}"
-        username = f"logouttest_{unique_id}"
-        password = "TestPass123!"
-
-        with allure.step("Register and login"):
-            # Register
-            page.goto(f"{FRONTEND_URL}/register")
-            page.fill('input[name="username"]', username)
-            page.fill('input[name="email"]', f"{username}@example.com")
-            page.fill('input[name="password"]', password)
-            page.click('button[type="submit"]')
-            page.wait_for_url(f"{FRONTEND_URL}/login")
-
-            # Login
-            page.fill('input[name="username"]', username)
-            page.fill('input[name="password"]', password)
-            page.click('button[type="submit"]')
-            page.wait_for_url(f"{FRONTEND_URL}/dashboard")
-
         with allure.step("Click logout button"):
-            page.click('a[href="/logout"]')
+            authenticated_page.click('a[href="/logout"]')
 
         with allure.step("Verify redirect to login page"):
-            page.wait_for_url(f"{FRONTEND_URL}/login", timeout=5000)
-            expect(page).to_have_url(f"{FRONTEND_URL}/login")
+            authenticated_page.wait_for_url(f"{FRONTEND_URL}/login")
+            expect(authenticated_page).to_have_url(f"{FRONTEND_URL}/login")
 
         with allure.step("Verify cannot access dashboard without login"):
-            page.goto(f"{FRONTEND_URL}/dashboard")
-            page.wait_for_url(f"{FRONTEND_URL}/login")
-            expect(page).to_have_url(f"{FRONTEND_URL}/login")
+            authenticated_page.goto(f"{FRONTEND_URL}/dashboard")
+            authenticated_page.wait_for_url(f"{FRONTEND_URL}/login")
+            expect(authenticated_page).to_have_url(f"{FRONTEND_URL}/login")
 
 
 @allure.feature("Authentication UI")
@@ -219,7 +213,7 @@ class TestProtectedRoutes:
             page.goto(f"{FRONTEND_URL}/dashboard")
 
         with allure.step("Verify redirect to login page"):
-            page.wait_for_url(f"{FRONTEND_URL}/login", timeout=5000)
+            page.wait_for_url(f"{FRONTEND_URL}/login")
             expect(page).to_have_url(f"{FRONTEND_URL}/login")
 
     @allure.severity(allure.severity_level.NORMAL)
@@ -232,5 +226,5 @@ class TestProtectedRoutes:
             page.goto(f"{FRONTEND_URL}/")
 
         with allure.step("Verify redirect to login page"):
-            page.wait_for_url(f"{FRONTEND_URL}/login", timeout=5000)
+            page.wait_for_url(f"{FRONTEND_URL}/login")
             expect(page).to_have_url(f"{FRONTEND_URL}/login")

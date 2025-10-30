@@ -169,7 +169,7 @@ export FRONTEND_URL
 export HEADLESS
 
 # Build pytest command
-PYTEST_CMD="uv run pytest ${TEST_PATTERN} -m ui ${VERBOSE}"
+PYTEST_CMD="uv run pytest ${TEST_PATTERN} -n4 -m ui ${VERBOSE}"
 
 if [ "$ALLURE_REPORT" = true ]; then
     print_info "Allure reporting enabled"

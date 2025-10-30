@@ -148,7 +148,7 @@ fi
 export API_BASE_URL
 
 # Build pytest command
-PYTEST_CMD="uv run pytest ${TEST_PATTERN} ${VERBOSE}"
+PYTEST_CMD="uv run pytest ${TEST_PATTERN} -n8 ${VERBOSE}"
 
 if [ -n "$MARKERS" ]; then
     PYTEST_CMD="${PYTEST_CMD} -m ${MARKERS}"

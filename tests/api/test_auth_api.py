@@ -15,14 +15,10 @@ class TestUserRegistration:
     @allure.title("Register new user successfully")
     @allure.description("Verify that a new user can be registered with valid credentials")
     @pytest.mark.integration
-    def test_register_user_success(self, api_client, api_base_url):
+    def test_register_user_success(self, api_client, api_base_url, test_user_credentials):
         """Test successful user registration."""
         with allure.step("Prepare registration data"):
-            user_data = {
-                "username": f"newuser_{pytest.test_id}",
-                "email": f"newuser_{pytest.test_id}@example.com",
-                "password": "SecurePass123!",
-            }
+            user_data = test_user_credentials
             allure.attach(str(user_data), name="Registration Data", attachment_type=allure.attachment_type.JSON)
 
         with allure.step("Send registration request"):
