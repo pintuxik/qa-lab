@@ -44,7 +44,7 @@ services:
       - backend
     volumes:
       - ./frontend:/app
-    command: uv run python app/__init__.py
+    command: bash start.sh
 
 volumes:
   postgres_data:

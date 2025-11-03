@@ -3,7 +3,7 @@ Pytest configuration and fixtures for frontend tests.
 """
 
 import pytest
-from app import create_app
+from app.main import create_app
 
 
 @pytest.fixture

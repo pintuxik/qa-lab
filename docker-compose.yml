@@ -40,7 +40,7 @@ services:
       - SECRET_KEY=your-super-secret-key-change-in-production
     depends_on:
       - backend
-    command: uv run python app/__init__.py
+    command: bash start.sh
 
 volumes:
   postgres_data:

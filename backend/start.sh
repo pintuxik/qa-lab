@@ -14,4 +14,4 @@ uv run app/init_db.py
 
 # Start the FastAPI application
 echo "Starting FastAPI application..."
-uv run uvicorn app.main:app --host 0.0.0.0 --port 8000
+uv run granian --interface asgi app.main:app --host 0.0.0.0 --port 8000

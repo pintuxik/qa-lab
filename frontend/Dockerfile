@@ -17,4 +17,4 @@ RUN uv sync
 EXPOSE 5000
 
 # Run the application
-CMD ["uv", "run", "python", "app/__init__.py"]
+CMD ["bash", "start.sh"]
