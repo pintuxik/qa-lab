@@ -169,7 +169,11 @@ export FRONTEND_URL
 export HEADLESS
 
 # Build pytest command
-PYTEST_CMD="uv run pytest ${TEST_PATTERN} -n4 -m ui ${VERBOSE}"
+PYTEST_CMD="uv run pytest ${TEST_PATTERN} -m ui ${VERBOSE}"
+
+# Adjust number of threads for pytest
+NPROC_ADJUSTED=$(($(nproc)/2))
+export PYTEST_ADDOPTS="-n$NPROC_ADJUSTED"
 
 if [ "$ALLURE_REPORT" = true ]; then
     print_info "Allure reporting enabled"

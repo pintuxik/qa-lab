@@ -45,6 +45,9 @@ FRONTEND_PASSED=0
 API_PASSED=0
 UI_PASSED=0
 
+# Adjust number of threads for pytest
+export PYTEST_ADDOPTS="-n$(nproc)"
+
 # Backend Tests
 echo -e "${BLUE}📦 Running Backend Tests...${NC}"
 echo "----------------------------"
@@ -54,7 +57,7 @@ cd backend
 echo "Installing dependencies..."
 if uv sync --extra test > /dev/null 2>&1 || uv sync --extra test; then
     echo "Running tests..."
-    if uv run pytest -v -n8; then
+    if uv run pytest -v; then
         echo -e "${GREEN}✅ Backend tests passed!${NC}"
         BACKEND_PASSED=1
     else
@@ -75,7 +78,7 @@ cd frontend
 echo "Installing dependencies..."
 if uv sync --extra test > /dev/null 2>&1 || uv sync --extra test; then
     echo "Running tests..."
-    if uv run pytest -v -n8; then
+    if uv run pytest -v; then
         echo -e "${GREEN}✅ Frontend tests passed!${NC}"
         FRONTEND_PASSED=1
     else
