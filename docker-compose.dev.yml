@@ -31,6 +31,7 @@ services:
         condition: service_healthy
     volumes:
       - ./backend:/app
+      - backend_venv:/app/.venv  # Keep Docker venv separate from host
     command: bash start.sh
 
   frontend:
@@ -44,7 +45,10 @@ services:
       - backend
     volumes:
       - ./frontend:/app
+      - frontend_venv:/app/.venv  # Keep Docker venv separate from host
     command: bash start.sh
 
 volumes:
   postgres_data:
+  backend_venv:    # Named volume for backend venv
+  frontend_venv:   # Named volume for frontend venv
