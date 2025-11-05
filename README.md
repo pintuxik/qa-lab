@@ -166,14 +166,14 @@ qa-lab/
 ```bash
 cd qa-lab/backend
 uv sync
-uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+uv run granian --interface asgi app.main:app --host 0.0.0.0 --port 8000
 ```
 
 ### Frontend Development (Flask)
 ```bash
 cd qa-lab/frontend
 uv sync
-uv run python app/__init__.py
+uv run granian --interface wsgi app.main:app --backpressure $(nproc) --host 0.0.0.0 --port 5000
 ```
 
 ### Database Management
@@ -203,13 +203,13 @@ This project includes **119 automated tests** with **88% code coverage**, demons
 ./run_all_tests.sh
 
 # Run specific test suites
-./run_api_tests.sh              # API integration tests (with 8-worker parallelization)
-./run_ui_tests.sh               # UI tests with Playwright (with 4-worker parallelization)
-cd backend && uv run pytest     # Backend unit tests (with 8-worker parallelization)
-cd frontend && uv run pytest    # Frontend unit tests (with 8-worker parallelization)
+./run_api_tests.sh              # API integration tests 
+./run_ui_tests.sh               # UI tests with Playwright 
+cd backend && uv run pytest     # Backend unit tests
+cd frontend && uv run pytest    # Frontend unit tests
 ```
 
-**Performance Note**: Unit tests and Integration tests API run with **8-worker parallelization** by default for 7-8x faster execution. UI tests run with **4-worker parallelization** due to their slower nature.
+**Performance Note**: Unit tests and Integration tests API run with **number of CPU threads -worker parallelization** by default for faster execution. UI tests run with **number of CPU threads/2 -worker parallelization** due to their slower nature.
 
 ### Test Features
 - ✅ Automated test execution scripts
@@ -218,7 +218,7 @@ cd frontend && uv run pytest    # Frontend unit tests (with 8-worker paralleliza
 - ✅ Code coverage reports (HTML format)
 - ✅ CI/CD ready configuration
 - ✅ Comprehensive test documentation
-- ✅ **8-worker parallel execution** for all tests (7-8x speedup)
+- ✅ **number of CPU threads-worker parallel execution** for all tests
 - ✅ 100% test isolation with UUID-based identifiers
 
 See [TESTING.md](TESTING.md) for detailed testing documentation.
@@ -244,10 +244,29 @@ See [TESTING.md](TESTING.md) for detailed testing documentation.
 
 ### Environment Variables
 
+The project uses `.env` files for configuration. Example templates are provided:
+
+- [.env.example](.env.example) - Root configuration (integration tests)
+- [backend/.env.example](backend/.env.example) - Backend configuration
+- [frontend/.env.example](frontend/.env.example) - Frontend configuration
+
+**Quick Setup:**
+```bash
+# Copy example files
+cp .env.example .env
+cp backend/.env.example backend/.env
+cp frontend/.env.example frontend/.env
+
+# Generate secure secret keys
+python3 -c "import secrets; print(secrets.token_urlsafe(32))"
+```
+
+**Key Variables:**
+
 **Backend (.env)**
 ```
 DATABASE_URL=postgresql://postgres:password@db:5432/taskmanager
-SECRET_KEY=your-super-secret-key-change-in-production
+SECRET_KEY=<your-generated-secret-key>
 ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=30
 FRONTEND_URL=http://localhost:5000
@@ -256,7 +275,14 @@ FRONTEND_URL=http://localhost:5000
 **Frontend (.env)**
 ```
 API_BASE_URL=http://backend:8000
-SECRET_KEY=your-super-secret-key-change-in-production
+SECRET_KEY=<your-generated-secret-key>
+```
+
+**Root (.env)** - For integration tests
+```
+API_BASE_URL=http://localhost:8000
+FRONTEND_URL=http://localhost:5000
+HEADLESS=true
 ```
 
 ## 🐳 Docker Commands
@@ -293,27 +319,6 @@ docker-compose exec db psql -U postgres -d taskmanager
 - **`docker-compose.dev.yml`** - Development setup with volume mounts for hot code reloading. Use this when actively developing.
 - **`docker-compose.prod.yml`** - Same as default, provided for clarity.
 
-## 🗄️ Database Schema
-
-### Users Table
-- `id` (Primary Key)
-- `email` (Unique)
-- `username` (Unique)
-- `hashed_password`
-- `is_active`
-- `is_admin`
-- `created_at`
-
-### Tasks Table
-- `id` (Primary Key)
-- `title`
-- `description`
-- `is_completed`
-- `priority` (low/medium/high)
-- `category`
-- `created_at`
-- `updated_at`
-- `owner_id` (Foreign Key to Users)
 
 ## 🔒 Security Features
 
@@ -401,7 +406,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🙏 Acknowledgments
 
-- Built with [Windsurf AI](https://codeium.com/windsurf) coding assistant
+- Built with multiple coding assistants
 - Demonstrates AI-assisted development practices
 - Inspired by modern full-stack development patterns
 
