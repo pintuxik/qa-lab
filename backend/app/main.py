@@ -1,4 +1,5 @@
 import os
+from contextlib import asynccontextmanager
 
 from app.api import auth, tasks
 from app.core.config import settings
@@ -6,15 +7,23 @@ from app.database import Base, engine
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-app = FastAPI(title="Task Management API", description="A simple task management system", version="1.0.0")
 
-
-@app.on_event("startup")
-def create_tables():
-    """Create database tables on application startup."""
-    # Skip database creation during testing
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Manage application lifespan events."""
+    # Startup: Create database tables
     if os.getenv("TESTING") != "true":
         Base.metadata.create_all(bind=engine)
+    yield
+    # Shutdown: cleanup if needed
+
+
+app = FastAPI(
+    title="Task Management API",
+    description="A simple task management system",
+    version="1.0.0",
+    lifespan=lifespan,
+)
 
 
 # Configure CORS

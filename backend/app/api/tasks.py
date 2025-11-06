@@ -21,7 +21,7 @@ def get_tasks(
 
 @router.post("/", response_model=TaskSchema)
 def create_task(task: TaskCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    db_task = Task(**task.dict(), owner_id=current_user.id)
+    db_task = Task(**task.model_dump(), owner_id=current_user.id)
     db.add(db_task)
     db.commit()
     db.refresh(db_task)
@@ -44,7 +44,7 @@ def update_task(
     if task is None:
         raise HTTPException(status_code=404, detail="Task not found")
 
-    update_data = task_update.dict(exclude_unset=True)
+    update_data = task_update.model_dump(exclude_unset=True)
     for field, value in update_data.items():
         setattr(task, field, value)
 

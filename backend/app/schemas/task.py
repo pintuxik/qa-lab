@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, model_validator
 
 
 class TaskBase(BaseModel):
@@ -22,6 +22,14 @@ class TaskUpdate(BaseModel):
     priority: Optional[str] = None
     category: Optional[str] = None
 
+    @model_validator(mode="before")
+    @classmethod
+    def check_non_nullable_fields(cls, data):
+        # If title is explicitly provided and is None, raise an error
+        if isinstance(data, dict) and "title" in data and data["title"] is None:
+            raise ValueError("title cannot be null")
+        return data
+
 
 class Task(TaskBase):
     id: int
@@ -30,5 +38,4 @@ class Task(TaskBase):
     updated_at: Optional[datetime] = None
     owner_id: int
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
