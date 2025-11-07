@@ -28,7 +28,7 @@ from playwright.sync_api import Browser, BrowserContext, Page, sync_playwright
 from utils.utils import get_screenshot_path
 
 # URLs
-FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5000")
+FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5001")
 API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000")
 
 

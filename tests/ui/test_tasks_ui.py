@@ -16,7 +16,7 @@ import pytest
 from playwright.sync_api import Page, expect
 
 # Frontend URL
-FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5000")
+FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5001")
 
 
 @allure.feature("Task Management UI")

@@ -25,7 +25,7 @@ services:
     environment:
       - DATABASE_URL=postgresql://postgres:password@db:5432/taskmanager
       - SECRET_KEY=your-super-secret-key-change-in-production
-      - FRONTEND_URL=http://localhost:5000
+      - FRONTEND_URL=http://localhost:5001
     depends_on:
       db:
         condition: service_healthy
@@ -34,7 +34,7 @@ services:
   frontend:
     build: ./frontend
     ports:
-      - "5000:5000"
+      - "5001:5001"
     environment:
       - API_BASE_URL=http://backend:8000
       - SECRET_KEY=your-super-secret-key-change-in-production

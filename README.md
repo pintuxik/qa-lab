@@ -143,7 +143,7 @@ qa-lab/
    ```
 
 5. **Access the application:**
-   - **Frontend**: http://localhost:5000
+   - **Frontend**: http://localhost:5001
    - **Backend API**: http://localhost:8000
    - **API Documentation**: http://localhost:8000/docs
    - **Database**: localhost:5432 (postgres/password)
@@ -173,7 +173,7 @@ uv run granian --interface asgi app.main:app --host 0.0.0.0 --port 8000
 ```bash
 cd qa-lab/frontend
 uv sync
-uv run granian --interface wsgi app.main:app --backpressure $(nproc) --host 0.0.0.0 --port 5000
+uv run granian --interface wsgi app.main:app --backpressure $(nproc) --host 0.0.0.0 --port 5001
 ```
 
 ### Database Management
@@ -269,7 +269,7 @@ DATABASE_URL=postgresql://postgres:password@db:5432/taskmanager
 SECRET_KEY=<your-generated-secret-key>
 ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=30
-FRONTEND_URL=http://localhost:5000
+FRONTEND_URL=http://localhost:5001
 ```
 
 **Frontend (.env)**
@@ -281,7 +281,7 @@ SECRET_KEY=<your-generated-secret-key>
 **Root (.env)** - For integration tests
 ```
 API_BASE_URL=http://localhost:8000
-FRONTEND_URL=http://localhost:5000
+FRONTEND_URL=http://localhost:5001
 HEADLESS=true
 ```
 
@@ -343,7 +343,7 @@ docker-compose exec db psql -U postgres -d taskmanager
 
 ### Common Issues
 
-1. **Port already in use**: Stop other services using ports 5000, 8000, or 5432
+1. **Port already in use**: Stop other services using ports 5001, 8000, or 5432
 2. **Database connection failed**: Wait for PostgreSQL to fully start
 3. **Frontend can't reach backend**: Check Docker network connectivity
 4. **Permission denied**: Ensure Docker has proper permissions

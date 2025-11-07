@@ -113,7 +113,7 @@ init_database() {
     # Set environment variables
     export DATABASE_URL="postgresql://${DB_USER}:${DB_PASSWORD}@localhost:${DB_PORT}/${DB_NAME}"
     export SECRET_KEY="test-secret-key-for-integration-tests"
-    export FRONTEND_URL="http://localhost:5000"
+    export FRONTEND_URL="http://localhost:5001"
     
     # Install dependencies if needed
     if [ ! -d ".venv" ]; then
@@ -145,7 +145,7 @@ start_backend() {
     # Set environment variables
     export DATABASE_URL="postgresql://${DB_USER}:${DB_PASSWORD}@localhost:${DB_PORT}/${DB_NAME}"
     export SECRET_KEY="test-secret-key-for-integration-tests"
-    export FRONTEND_URL="http://localhost:5000"
+    export FRONTEND_URL="http://localhost:5001"
     
     print_info "Starting backend API on port ${BACKEND_PORT}..."
     print_info "Running: uv run uvicorn app.main:app --host 0.0.0.0 --port ${BACKEND_PORT}"

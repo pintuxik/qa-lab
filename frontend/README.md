@@ -34,7 +34,7 @@ docker-compose up --build frontend
 docker-compose up --build
 ```
 
-The frontend will be available at **http://localhost:5000**
+The frontend will be available at **http://localhost:5001**
 
 ## Architecture
 

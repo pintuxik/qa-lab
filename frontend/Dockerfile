@@ -14,7 +14,7 @@ COPY . .
 RUN uv sync
 
 # Expose port
-EXPOSE 5000
+EXPOSE 5001
 
 # Run the application
 CMD ["bash", "start.sh"]

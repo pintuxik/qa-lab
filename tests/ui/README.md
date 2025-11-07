@@ -68,11 +68,11 @@ allure serve allure-results
 
 ### Environment Variables
 
-- `FRONTEND_URL` - Frontend URL (default: `http://localhost:5000`)
+- `FRONTEND_URL` - Frontend URL (default: `http://localhost:5001`)
 - `HEADLESS` - Run in headless mode (default: `false`)
 
 ```bash
-export FRONTEND_URL="http://localhost:5000"
+export FRONTEND_URL="http://localhost:5001"
 export HEADLESS="true"
 uv run pytest tests/ui/ -m ui -v
 ```
@@ -127,7 +127,7 @@ Screenshots are automatically taken on test failure and saved to `screenshots/` 
 ```bash
 docker compose up -d
 # Verify frontend is running
-curl http://localhost:5000
+curl http://localhost:5001
 ```
 
 ### Playwright Not Installed
@@ -179,7 +179,7 @@ class TestMyFeature:
     def test_my_feature(self, page: Page):
         """Test docstring."""
         with allure.step("Step 1"):
-            page.goto("http://localhost:5000")
+            page.goto("http://localhost:5001")
             
         with allure.step("Step 2"):
             expect(page).to_have_title("Expected Title")
@@ -206,7 +206,7 @@ class TestMyFeature:
   run: docker compose up -d
 
 - name: Wait for Frontend
-  run: timeout 30 bash -c 'until curl -f http://localhost:5000; do sleep 1; done'
+  run: timeout 30 bash -c 'until curl -f http://localhost:5001; do sleep 1; done'
 
 - name: Run UI Tests
   run: |

@@ -13,7 +13,7 @@ YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
 # Default values
-FRONTEND_URL="${FRONTEND_URL:-http://localhost:5000}"
+FRONTEND_URL="${FRONTEND_URL:-http://localhost:5001}"
 HEADLESS="${HEADLESS:-false}"
 ALLURE_REPORT="${ALLURE_REPORT:-false}"
 TEST_PATTERN="${TEST_PATTERN:-tests/ui/}"
@@ -59,7 +59,7 @@ Run UI integration tests with Playwright
 
 OPTIONS:
     -h, --help              Show this help message
-    -u, --url URL           Frontend URL (default: http://localhost:5000)
+    -u, --url URL           Frontend URL (default: http://localhost:5001)
     -a, --allure            Generate Allure report after tests
     -t, --test PATTERN      Test pattern to run (default: tests/ui/)
     -b, --browser BROWSER   Browser to use (chromium/firefox/webkit, default: chromium)
@@ -82,7 +82,7 @@ EXAMPLES:
     $0 --allure
 
     # Run with custom frontend URL
-    $0 --url http://frontend.example.com:5000
+    $0 --url http://frontend.example.com:5001
 
 EOF
     exit 0
@@ -171,8 +171,14 @@ export HEADLESS
 # Build pytest command
 PYTEST_CMD="uv run pytest ${TEST_PATTERN} -m ui ${VERBOSE}"
 
-# Adjust number of threads for pytest
-NPROC_ADJUSTED=$(($(nproc)/2))
+# Adjust number of threads for pytest for UI tests
+if [ "$(uname)" == "Darwin" ]; then
+    NPROC_ADJUSTED=$(sysctl -n hw.physicalcpu) # macOS physical cores           
+elif [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]; then
+    NPROC_ADJUSTED=$(($(nproc)/2)) # Linux half of total cores
+else 
+    NPROC_ADJUSTED="1" # Other OS fallback
+fi    
 export PYTEST_ADDOPTS="-n$NPROC_ADJUSTED"
 
 if [ "$ALLURE_REPORT" = true ]; then

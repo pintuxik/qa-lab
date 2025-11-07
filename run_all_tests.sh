@@ -46,7 +46,7 @@ API_PASSED=0
 UI_PASSED=0
 
 # Adjust number of threads for pytest
-export PYTEST_ADDOPTS="-n$(nproc)"
+export PYTEST_ADDOPTS="-n auto"
 
 # Backend Tests
 echo -e "${BLUE}📦 Running Backend Tests...${NC}"
