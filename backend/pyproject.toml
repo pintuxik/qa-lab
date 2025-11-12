@@ -4,27 +4,26 @@ version = "1.0.0"
 description = "FastAPI backend for Task Management System"
 requires-python = ">=3.14"
 dependencies = [
-    "alembic>=1.12.1",
+    "alembic>=1.17.1",
     "bcrypt>=4.3.0,<5.0.0",
-    "fastapi>=0.120.0",
-    "granian>=2.5.6",
+    "fastapi>=0.121.0",
+    "granian>=2.5.7",
     "psycopg2-binary>=2.9.11",
-    "pydantic>=2.5.0",
-    "pydantic-settings>=2.1.0",
-    "python-dotenv>=1.0.0",
-    "python-jose[cryptography]>=3.3.0",
-    "python-multipart>=0.0.6",
-    "sqlalchemy>=2.0.23",
-    "uvicorn[standard]>=0.24.0",
+    "pydantic[email]>=2.12.0",
+    "pydantic-settings>=2.11.0",
+    "python-dotenv>=1.2.1",
+    "python-jose[cryptography]>=3.5.0",
+    "python-multipart>=0.0.20",
+    "sqlalchemy>=2.0.44",
 ]
 
 [project.optional-dependencies]
 test = [
-    "pytest>=7.4.0",
-    "pytest-asyncio>=0.21.0",
-    "pytest-cov>=4.1.0",
-    "pytest-xdist>=3.5.0",
-    "httpx>=0.24.0",
+    "pytest>=8.4.2",
+    "pytest-asyncio>=1.2.0",
+    "pytest-cov>=7.0.0",
+    "pytest-xdist>=3.8.0",
+    "httpx>=0.28.1",
 ]
 
 [build-system]

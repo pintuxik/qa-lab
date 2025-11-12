@@ -16,6 +16,9 @@ os.environ["TESTING"] = "true"
 from app.core.security import get_password_hash
 from app.database import Base, get_db
 from app.main import app
+from app.models import Task, User
+
+from tests.test_data import Endpoints, TestUsers
 
 # Use in-memory SQLite for testing
 SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
@@ -59,12 +62,10 @@ def client(db_session):
 @pytest.fixture
 def test_user(db_session):
     """Create a test user in the database."""
-    from app.models import User
-
     user = User(
-        username="testuser",
-        email="test@example.com",
-        hashed_password=get_password_hash("testpass123"),
+        username=TestUsers.VALID_USER["username"],
+        email=TestUsers.VALID_USER["email"],
+        hashed_password=get_password_hash(TestUsers.VALID_USER["password"]),
         is_active=True,
         is_admin=False,
     )
@@ -77,12 +78,10 @@ def test_user(db_session):
 @pytest.fixture
 def admin_user(db_session):
     """Create an admin user in the database."""
-    from app.models import User
-
     user = User(
-        username="admin",
-        email="admin@example.com",
-        hashed_password=get_password_hash("admin123"),
+        username=TestUsers.ADMIN_USER["username"],
+        email=TestUsers.ADMIN_USER["email"],
+        hashed_password=get_password_hash(TestUsers.ADMIN_USER["password"]),
         is_active=True,
         is_admin=True,
     )
@@ -95,7 +94,10 @@ def admin_user(db_session):
 @pytest.fixture
 def auth_token(client, test_user):
     """Get authentication token for test user."""
-    response = client.post("/api/auth/login", data={"username": "testuser", "password": "testpass123"})
+    response = client.post(
+        Endpoints.AUTH_LOGIN,
+        data={"username": TestUsers.VALID_USER["username"], "password": TestUsers.VALID_USER["password"]},
+    )
     return response.json()["access_token"]
 
 
@@ -108,8 +110,6 @@ def auth_headers(auth_token):
 @pytest.fixture
 def test_task(db_session, test_user):
     """Create a test task in the database."""
-    from app.models import Task
-
     task = Task(
         title="Test Task",
         description="This is a test task",

@@ -1,14 +1,37 @@
 from datetime import datetime
-from typing import Optional
+from typing import Annotated, Literal, Optional
 
-from pydantic import BaseModel, ConfigDict, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
 class TaskBase(BaseModel):
-    title: str
-    description: Optional[str] = None
-    priority: str = "medium"
-    category: Optional[str] = None
+    title: Annotated[str, Field(min_length=1, max_length=100)]
+    description: Optional[Annotated[str, Field(min_length=1, max_length=500)]] = None
+    priority: Literal["low", "medium", "high"] = "medium"
+    category: Optional[Annotated[str, Field(min_length=1, max_length=50)]] = None
+
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        json_schema_extra={
+            "examples": [
+                {
+                    "title": "Complete project documentation",
+                    "description": "Write comprehensive documentation for the new API endpoints",
+                    "priority": "high",
+                    "category": "documentation",
+                }
+            ]
+        },
+    )
+
+    @field_validator("description", "category", mode="before")
+    @classmethod
+    def empty_string_to_none(cls, v):
+        """Convert empty strings to None."""
+        if isinstance(v, str) and v.strip() == "":
+            return None
+        return v
 
 
 class TaskCreate(TaskBase):
@@ -16,11 +39,11 @@ class TaskCreate(TaskBase):
 
 
 class TaskUpdate(BaseModel):
-    title: Optional[str] = None
-    description: Optional[str] = None
+    title: Optional[Annotated[str, Field(min_length=1, max_length=100)]] = None
+    description: Optional[Annotated[str, Field(min_length=1, max_length=500)]] = None
     is_completed: Optional[bool] = None
-    priority: Optional[str] = None
-    category: Optional[str] = None
+    priority: Optional[Literal["low", "medium", "high"]] = None
+    category: Optional[Annotated[str, Field(min_length=1, max_length=50)]] = None
 
     @model_validator(mode="before")
     @classmethod

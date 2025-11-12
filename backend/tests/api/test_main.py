@@ -1,5 +1,7 @@
 """Unit tests for main application endpoints."""
 
+from tests.test_data import Endpoints
+
 
 class TestRootEndpoint:
     """Test the root endpoint."""
@@ -87,7 +89,7 @@ class TestCORSConfiguration:
 
     def test_cors_headers_present_on_options_request(self, client):
         """Test that CORS headers are present on OPTIONS request."""
-        response = client.options("/api/auth/register")
+        response = client.options(Endpoints.AUTH_REGISTER)
 
         # OPTIONS may return 405 if not explicitly configured
         # CORS headers should still be present
@@ -98,7 +100,7 @@ class TestCORSConfiguration:
 
     def test_cors_allows_credentials(self, client):
         """Test that CORS allows credentials."""
-        response = client.options("/api/tasks/")
+        response = client.options(Endpoints.TASKS)
 
         # Should allow credentials
         # Note: Actual header name might be case-insensitive
@@ -112,7 +114,7 @@ class TestAPIDocumentation:
 
     def test_openapi_schema_available(self, client):
         """Test that OpenAPI schema is available."""
-        response = client.get("/openapi.json")
+        response = client.get(Endpoints.OPENAPI)
 
         assert response.status_code == 200
         schema = response.json()
@@ -123,13 +125,13 @@ class TestAPIDocumentation:
 
     def test_docs_endpoint_available(self, client):
         """Test that Swagger docs endpoint is available."""
-        response = client.get("/docs")
+        response = client.get(Endpoints.DOCS)
 
         assert response.status_code == 200
 
     def test_redoc_endpoint_available(self, client):
         """Test that ReDoc docs endpoint is available."""
-        response = client.get("/redoc")
+        response = client.get(Endpoints.REDOC)
 
         assert response.status_code == 200
 
@@ -146,14 +148,14 @@ class TestInvalidEndpoints:
 
     def test_invalid_api_path_returns_404(self, client):
         """Test that invalid API path returns 404."""
-        response = client.get("/api/invalid")
+        response = client.get("/api/invalid")  # Intentionally invalid path
 
         assert response.status_code == 404
 
     def test_invalid_method_returns_405(self, client):
         """Test that invalid HTTP method returns 405."""
         # GET on login endpoint (which only accepts POST)
-        response = client.get("/api/auth/login")
+        response = client.get(Endpoints.AUTH_LOGIN)
 
         assert response.status_code == 405
 
@@ -163,10 +165,10 @@ class TestInvalidEndpoints:
         response1 = client.get("/health")
         response2 = client.get("/health/")
 
-        # Both should work or redirect properly
-        assert response1.status_code in [200]
-        assert response2.status_code in [200, 307]  # 307 is temporary redirect
-        # Note: FastAPI automatically redirects /endpoint/ to /endpoint
+        # Without trailing slash should work
+        assert response1.status_code == 200
+        # With trailing slash should succeed (TestClient follows redirects automatically)
+        assert response2.status_code == 200
 
 
 class TestApplicationMetadata:
@@ -174,51 +176,53 @@ class TestApplicationMetadata:
 
     def test_api_title_in_openapi(self, client):
         """Test that API title is correctly set in OpenAPI schema."""
-        response = client.get("/openapi.json")
+        response = client.get(Endpoints.OPENAPI)
         schema = response.json()
 
         assert schema["info"]["title"] == "Task Management API"
 
     def test_api_description_in_openapi(self, client):
         """Test that API description is correctly set."""
-        response = client.get("/openapi.json")
+        response = client.get(Endpoints.OPENAPI)
         schema = response.json()
 
         assert schema["info"]["description"] == "A simple task management system"
 
     def test_api_version_in_openapi(self, client):
         """Test that API version is correctly set."""
-        response = client.get("/openapi.json")
+        response = client.get(Endpoints.OPENAPI)
         schema = response.json()
 
         assert schema["info"]["version"] == "1.0.0"
 
     def test_auth_endpoints_in_openapi(self, client):
         """Test that auth endpoints are documented in OpenAPI."""
-        response = client.get("/openapi.json")
+        response = client.get(Endpoints.OPENAPI)
         schema = response.json()
 
         paths = schema["paths"]
-        assert "/api/auth/register" in paths
-        assert "/api/auth/login" in paths
+        assert Endpoints.AUTH_REGISTER in paths
+        assert Endpoints.AUTH_LOGIN in paths
 
     def test_tasks_endpoints_in_openapi(self, client):
         """Test that tasks endpoints are documented in OpenAPI."""
-        response = client.get("/openapi.json")
+        response = client.get(Endpoints.OPENAPI)
         schema = response.json()
 
         paths = schema["paths"]
+        # OpenAPI schema uses trailing slash for router endpoints
         assert "/api/tasks/" in paths
         assert "/api/tasks/{task_id}" in paths
 
     def test_tags_in_openapi(self, client):
         """Test that API tags are properly set."""
-        response = client.get("/openapi.json")
+        response = client.get(Endpoints.OPENAPI)
         schema = response.json()
 
         # Check that endpoints have proper tags
-        auth_register = schema["paths"]["/api/auth/register"]["post"]
+        auth_register = schema["paths"][Endpoints.AUTH_REGISTER]["post"]
         assert "authentication" in auth_register["tags"]
 
+        # OpenAPI schema uses trailing slash for router endpoints
         tasks_list = schema["paths"]["/api/tasks/"]["get"]
         assert "tasks" in tasks_list["tags"]
