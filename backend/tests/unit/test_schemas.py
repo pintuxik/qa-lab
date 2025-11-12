@@ -7,6 +7,8 @@ from app.schemas.task import Task, TaskBase, TaskCreate, TaskUpdate
 from app.schemas.user import User, UserBase, UserCreate
 from pydantic import ValidationError
 
+from tests.test_data import TestHelpers
+
 
 class TestUserSchemas:
     """Test User schema validation."""
@@ -26,8 +28,7 @@ class TestUserSchemas:
         with pytest.raises(ValidationError) as exc_info:
             UserBase(**user_data)
 
-        errors = exc_info.value.errors()
-        assert any(error["loc"] == ("email",) for error in errors)
+        TestHelpers.assert_validation_error_on_field(exc_info, "email")
 
     def test_user_base_missing_username(self):
         """Test UserBase validation fails without username."""
@@ -36,30 +37,34 @@ class TestUserSchemas:
         with pytest.raises(ValidationError) as exc_info:
             UserBase(**user_data)
 
-        errors = exc_info.value.errors()
-        assert any(error["loc"] == ("username",) for error in errors)
+        TestHelpers.assert_validation_error_on_field(exc_info, "username")
 
     def test_user_base_empty_email(self):
-        """Test UserBase accepts empty string for email (no validation)."""
+        """Test UserBase rejects empty string for email (EmailStr validation)."""
         user_data = {"email": "", "username": "testuser"}
-        # Note: Current schema doesn't validate email format
-        user = UserBase(**user_data)
-        assert user.email == ""
+
+        with pytest.raises(ValidationError) as exc_info:
+            UserBase(**user_data)
+
+        TestHelpers.assert_validation_error_on_field(exc_info, "email")
 
     def test_user_base_empty_username(self):
-        """Test UserBase accepts empty string for username."""
+        """Test UserBase rejects empty string for username (min_length validation)."""
         user_data = {"email": "test@example.com", "username": ""}
-        user = UserBase(**user_data)
-        assert user.username == ""
+
+        with pytest.raises(ValidationError) as exc_info:
+            UserBase(**user_data)
+
+        TestHelpers.assert_validation_error_type(exc_info, "username", "string_too_short")
 
     def test_user_create_valid_data(self):
         """Test UserCreate with valid data."""
-        user_data = {"email": "test@example.com", "username": "testuser", "password": "securepassword123"}
+        user_data = {"email": "test@example.com", "username": "testuser", "password": "SecurePass123!"}
         user = UserCreate(**user_data)
 
         assert user.email == "test@example.com"
         assert user.username == "testuser"
-        assert user.password == "securepassword123"
+        assert user.password == "SecurePass123!"
 
     def test_user_create_missing_password(self):
         """Test UserCreate validation fails without password."""
@@ -68,31 +73,25 @@ class TestUserSchemas:
         with pytest.raises(ValidationError) as exc_info:
             UserCreate(**user_data)
 
-        errors = exc_info.value.errors()
-        assert any(error["loc"] == ("password",) for error in errors)
+        TestHelpers.assert_validation_error_on_field(exc_info, "password")
 
     def test_user_create_empty_password(self):
-        """Test UserCreate accepts empty password (no validation)."""
+        """Test UserCreate rejects empty password (min_length validation)."""
         user_data = {"email": "test@example.com", "username": "testuser", "password": ""}
-        # Note: Current schema doesn't validate password strength
-        user = UserCreate(**user_data)
-        assert user.password == ""
+
+        with pytest.raises(ValidationError) as exc_info:
+            UserCreate(**user_data)
+
+        TestHelpers.assert_validation_error_type(exc_info, "password", "string_too_short")
 
     def test_user_create_very_long_password(self):
-        """Test UserCreate accepts very long password."""
+        """Test UserCreate rejects very long password (max_length=128)."""
         user_data = {"email": "test@example.com", "username": "testuser", "password": "A" * 1000}
-        user = UserCreate(**user_data)
-        assert len(user.password) == 1000
 
-    def test_user_create_special_characters_in_password(self):
-        """Test UserCreate accepts special characters in password."""
-        user_data = {
-            "email": "test@example.com",
-            "username": "testuser",
-            "password": "P@ssw0rd!#$%^&*(){}[]|\\:;\"'<>,.?/~`",
-        }
-        user = UserCreate(**user_data)
-        assert user.password == "P@ssw0rd!#$%^&*(){}[]|\\:;\"'<>,.?/~`"
+        with pytest.raises(ValidationError) as exc_info:
+            UserCreate(**user_data)
+
+        TestHelpers.assert_validation_error_type(exc_info, "password", "string_too_long")
 
     def test_user_schema_valid_data(self):
         """Test User schema with valid data."""
@@ -102,7 +101,7 @@ class TestUserSchemas:
             "username": "testuser",
             "is_active": True,
             "is_admin": False,
-            "created_at": datetime.now(),
+            "created_at": TestHelpers.get_current_datetime(),
         }
         user = User(**user_data)
 
@@ -120,12 +119,7 @@ class TestUserSchemas:
         with pytest.raises(ValidationError) as exc_info:
             User(**user_data)
 
-        errors = exc_info.value.errors()
-        error_fields = [error["loc"][0] for error in errors]
-        assert "id" in error_fields
-        assert "is_active" in error_fields
-        assert "is_admin" in error_fields
-        assert "created_at" in error_fields
+        TestHelpers.assert_validation_error_on_fields(exc_info, "id", "is_active", "is_admin", "created_at")
 
     def test_user_schema_invalid_id_type(self):
         """Test User schema validation fails with invalid id type."""
@@ -135,14 +129,13 @@ class TestUserSchemas:
             "username": "testuser",
             "is_active": True,
             "is_admin": False,
-            "created_at": datetime.now(),
+            "created_at": TestHelpers.get_current_datetime(),
         }
 
         with pytest.raises(ValidationError) as exc_info:
             User(**user_data)
 
-        errors = exc_info.value.errors()
-        assert any(error["loc"] == ("id",) for error in errors)
+        TestHelpers.assert_validation_error_on_field(exc_info, "id")
 
     def test_user_schema_invalid_boolean_type(self):
         """Test User schema validation with invalid boolean type."""
@@ -152,15 +145,14 @@ class TestUserSchemas:
             "username": "testuser",
             "is_active": "not_a_bool",
             "is_admin": False,
-            "created_at": datetime.now(),
+            "created_at": TestHelpers.get_current_datetime(),
         }
 
         # Pydantic v2 doesn't coerce random strings to bool
         with pytest.raises(ValidationError) as exc_info:
             User(**user_data)
 
-        errors = exc_info.value.errors()
-        assert any(error["loc"] == ("is_active",) for error in errors)
+        TestHelpers.assert_validation_error_on_field(exc_info, "is_active")
 
     def test_user_schema_invalid_datetime_type(self):
         """Test User schema validation fails with invalid datetime."""
@@ -176,8 +168,7 @@ class TestUserSchemas:
         with pytest.raises(ValidationError) as exc_info:
             User(**user_data)
 
-        errors = exc_info.value.errors()
-        assert any(error["loc"] == ("created_at",) for error in errors)
+        TestHelpers.assert_validation_error_on_field(exc_info, "created_at")
 
 
 class TestTaskSchemas:
@@ -210,14 +201,16 @@ class TestTaskSchemas:
         with pytest.raises(ValidationError) as exc_info:
             TaskBase(**task_data)
 
-        errors = exc_info.value.errors()
-        assert any(error["loc"] == ("title",) for error in errors)
+        TestHelpers.assert_validation_error_on_field(exc_info, "title")
 
     def test_task_base_empty_title(self):
-        """Test TaskBase accepts empty title."""
+        """Test TaskBase rejects empty title due to min_length validation."""
         task_data = {"title": ""}
-        task = TaskBase(**task_data)
-        assert task.title == ""
+
+        with pytest.raises(ValidationError) as exc_info:
+            TaskBase(**task_data)
+
+        TestHelpers.assert_validation_error_type(exc_info, "title", "string_too_short")
 
     def test_task_base_null_description(self):
         """Test TaskBase accepts None for description."""
@@ -238,14 +231,23 @@ class TestTaskSchemas:
         assert task.priority == "medium"
 
     def test_task_base_custom_priority(self):
-        """Test TaskBase accepts custom priority values."""
-        priorities = ["low", "medium", "high", "urgent", "invalid"]
+        """Test TaskBase accepts valid priority values and rejects invalid ones."""
+        valid_priorities = ["low", "medium", "high"]
+        invalid_priorities = ["urgent", "invalid"]
 
-        for priority in priorities:
+        # Test valid priorities
+        for priority in valid_priorities:
             task_data = {"title": "Task", "priority": priority}
-            # Note: Current schema doesn't validate priority values
             task = TaskBase(**task_data)
             assert task.priority == priority
+
+        # Test invalid priorities raise validation error
+        for priority in invalid_priorities:
+            task_data = {"title": "Task", "priority": priority}
+            with pytest.raises(ValidationError) as exc_info:
+                TaskBase(**task_data)
+
+            TestHelpers.assert_validation_error_type(exc_info, "priority", "literal_error")
 
     def test_task_create_inherits_from_task_base(self):
         """Test TaskCreate has same validation as TaskBase."""
@@ -294,8 +296,7 @@ class TestTaskSchemas:
         with pytest.raises(ValidationError) as exc_info:
             TaskUpdate(**task_data)
 
-        errors = exc_info.value.errors()
-        assert any(error["loc"] == ("is_completed",) for error in errors)
+        TestHelpers.assert_validation_error_on_field(exc_info, "is_completed")
 
     def test_task_schema_valid_data(self):
         """Test Task schema with valid data."""
@@ -306,8 +307,8 @@ class TestTaskSchemas:
             "is_completed": False,
             "priority": "medium",
             "category": "work",
-            "created_at": datetime.now(),
-            "updated_at": datetime.now(),
+            "created_at": TestHelpers.get_current_datetime(),
+            "updated_at": TestHelpers.get_current_datetime(),
             "owner_id": 1,
         }
         task = Task(**task_data)
@@ -328,7 +329,7 @@ class TestTaskSchemas:
             "id": 1,
             "title": "Task",
             "is_completed": False,
-            "created_at": datetime.now(),
+            "created_at": TestHelpers.get_current_datetime(),
             "updated_at": None,
             "owner_id": 1,
         }
@@ -342,12 +343,7 @@ class TestTaskSchemas:
         with pytest.raises(ValidationError) as exc_info:
             Task(**task_data)
 
-        errors = exc_info.value.errors()
-        error_fields = [error["loc"][0] for error in errors]
-        assert "id" in error_fields
-        assert "is_completed" in error_fields
-        assert "created_at" in error_fields
-        assert "owner_id" in error_fields
+        TestHelpers.assert_validation_error_on_fields(exc_info, "id", "is_completed", "created_at", "owner_id")
 
     def test_task_schema_invalid_id_type(self):
         """Test Task schema validation fails with invalid id type."""
@@ -355,15 +351,14 @@ class TestTaskSchemas:
             "id": "not_an_int",
             "title": "Task",
             "is_completed": False,
-            "created_at": datetime.now(),
+            "created_at": TestHelpers.get_current_datetime(),
             "owner_id": 1,
         }
 
         with pytest.raises(ValidationError) as exc_info:
             Task(**task_data)
 
-        errors = exc_info.value.errors()
-        assert any(error["loc"] == ("id",) for error in errors)
+        TestHelpers.assert_validation_error_on_field(exc_info, "id")
 
     def test_task_schema_invalid_owner_id_type(self):
         """Test Task schema validation fails with invalid owner_id type."""
@@ -371,23 +366,31 @@ class TestTaskSchemas:
             "id": 1,
             "title": "Task",
             "is_completed": False,
-            "created_at": datetime.now(),
+            "created_at": TestHelpers.get_current_datetime(),
             "owner_id": "not_an_int",
         }
 
         with pytest.raises(ValidationError) as exc_info:
             Task(**task_data)
 
-        errors = exc_info.value.errors()
-        assert any(error["loc"] == ("owner_id",) for error in errors)
+        TestHelpers.assert_validation_error_on_field(exc_info, "owner_id")
 
     def test_task_schema_very_long_title(self):
-        """Test Task schema with very long title."""
+        """Test Task schema rejects very long title due to max_length validation."""
         long_title = "A" * 10000
 
-        task_data = {"id": 1, "title": long_title, "is_completed": False, "created_at": datetime.now(), "owner_id": 1}
-        task = Task(**task_data)
-        assert len(task.title) == 10000
+        task_data = {
+            "id": 1,
+            "title": long_title,
+            "is_completed": False,
+            "created_at": TestHelpers.get_current_datetime(),
+            "owner_id": 1,
+        }
+
+        with pytest.raises(ValidationError) as exc_info:
+            Task(**task_data)
+
+        TestHelpers.assert_validation_error_type(exc_info, "title", "string_too_long")
 
     def test_task_schema_unicode_characters(self):
         """Test Task schema with unicode characters."""
@@ -396,7 +399,7 @@ class TestTaskSchemas:
             "title": "任务 タスク مهمة 📝",
             "description": "Unicode description: 你好世界",
             "is_completed": False,
-            "created_at": datetime.now(),
+            "created_at": TestHelpers.get_current_datetime(),
             "owner_id": 1,
         }
         task = Task(**task_data)
@@ -410,7 +413,7 @@ class TestTaskSchemas:
             "title": "Task: Review & Update @mentions #hashtags <html>",
             "description": "Special chars: !@#$%^&*(){}[]|\\:;\"'<>,.?/~`",
             "is_completed": False,
-            "created_at": datetime.now(),
+            "created_at": TestHelpers.get_current_datetime(),
             "owner_id": 1,
         }
         task = Task(**task_data)

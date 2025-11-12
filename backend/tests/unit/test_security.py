@@ -106,7 +106,7 @@ class TestUserAuthentication:
 
     def test_authenticate_valid_user(self, db_session, test_user):
         """Test authenticating with valid credentials."""
-        user = authenticate_user(db_session, "testuser", "testpass123")
+        user = authenticate_user(db_session, "testuser", "TestPass123!")
 
         assert user is not False
         assert user.username == "testuser"

@@ -4,25 +4,85 @@
 
 {% block content %}
 <div class="row justify-content-center">
-    <div class="col-md-6 col-lg-4">
+    <div class="col-md-8 col-lg-6">
         <div class="card shadow">
             <div class="card-body">
                 <h3 class="card-title text-center mb-4">
                     <i class="fas fa-user-plus"></i> Register
                 </h3>
-                <form method="POST">
+                <form method="POST" id="registerForm" novalidate>
+                    <!-- Username Field -->
                     <div class="mb-3">
                         <label for="username" class="form-label">Username</label>
-                        <input type="text" class="form-control" id="username" name="username" required>
+                        <input
+                            type="text"
+                            class="form-control"
+                            id="username"
+                            name="username"
+                            pattern="[a-zA-Z0-9_-]+"
+                            minlength="1"
+                            maxlength="100"
+                            required>
+                        <div class="invalid-feedback">
+                            Username must contain only letters, numbers, underscores, and hyphens (1-100 characters).
+                        </div>
+                        <div class="form-text text-muted">
+                            <small>Only letters, numbers, _ and - allowed</small>
+                        </div>
                     </div>
+
+                    <!-- Email Field -->
                     <div class="mb-3">
                         <label for="email" class="form-label">Email</label>
-                        <input type="email" class="form-control" id="email" name="email" required>
+                        <input
+                            type="email"
+                            class="form-control"
+                            id="email"
+                            name="email"
+                            required>
+                        <div class="invalid-feedback">
+                            Please provide a valid email address.
+                        </div>
                     </div>
+
+                    <!-- Password Field -->
                     <div class="mb-3">
                         <label for="password" class="form-label">Password</label>
-                        <input type="password" class="form-control" id="password" name="password" required>
+                        <input
+                            type="password"
+                            class="form-control"
+                            id="password"
+                            name="password"
+                            minlength="8"
+                            maxlength="128"
+                            required>
+                        <div class="invalid-feedback" id="passwordError">
+                            Please meet all password requirements.
+                        </div>
+
+                        <!-- Password Requirements Checklist -->
+                        <div class="mt-2">
+                            <small class="text-muted d-block mb-1">Password must contain:</small>
+                            <div class="password-requirements">
+                                <small id="req-length" class="d-block text-muted">
+                                    <i class="fas fa-circle-notch"></i> 8-128 characters
+                                </small>
+                                <small id="req-lowercase" class="d-block text-muted">
+                                    <i class="fas fa-circle-notch"></i> At least one lowercase letter (a-z)
+                                </small>
+                                <small id="req-uppercase" class="d-block text-muted">
+                                    <i class="fas fa-circle-notch"></i> At least one uppercase letter (A-Z)
+                                </small>
+                                <small id="req-digit" class="d-block text-muted">
+                                    <i class="fas fa-circle-notch"></i> At least one digit (0-9)
+                                </small>
+                                <small id="req-special" class="d-block text-muted">
+                                    <i class="fas fa-circle-notch"></i> At least one special character (@$!%*?&)
+                                </small>
+                            </div>
+                        </div>
                     </div>
+
                     <div class="d-grid">
                         <button type="submit" class="btn btn-primary">
                             <i class="fas fa-user-plus"></i> Register
@@ -36,4 +96,82 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<style>
+    .password-requirements .text-success {
+        color: #28a745 !important;
+    }
+    .password-requirements .text-danger {
+        color: #dc3545 !important;
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('registerForm');
+    const passwordInput = document.getElementById('password');
+    const usernameInput = document.getElementById('username');
+
+    // Password validation requirements
+    const requirements = {
+        length: { regex: /.{8,128}/, element: document.getElementById('req-length') },
+        lowercase: { regex: /[a-z]/, element: document.getElementById('req-lowercase') },
+        uppercase: { regex: /[A-Z]/, element: document.getElementById('req-uppercase') },
+        digit: { regex: /\d/, element: document.getElementById('req-digit') },
+        special: { regex: /[@$!%*?&]/, element: document.getElementById('req-special') }
+    };
+
+    // Real-time password validation
+    passwordInput.addEventListener('input', function() {
+        const password = this.value;
+        let allValid = true;
+
+        for (const [key, req] of Object.entries(requirements)) {
+            const isValid = req.regex.test(password);
+            const icon = req.element.querySelector('i');
+
+            if (isValid) {
+                req.element.classList.remove('text-muted', 'text-danger');
+                req.element.classList.add('text-success');
+                icon.className = 'fas fa-check-circle';
+            } else {
+                req.element.classList.remove('text-muted', 'text-success');
+                req.element.classList.add('text-danger');
+                icon.className = 'fas fa-times-circle';
+                allValid = false;
+            }
+        }
+
+        // Update validity
+        if (allValid && password.length >= 8) {
+            passwordInput.setCustomValidity('');
+        } else {
+            passwordInput.setCustomValidity('Password does not meet requirements');
+        }
+    });
+
+    // Username validation
+    usernameInput.addEventListener('input', function() {
+        const username = this.value;
+        const isValid = /^[a-zA-Z0-9_-]+$/.test(username);
+
+        if (isValid || username === '') {
+            usernameInput.setCustomValidity('');
+        } else {
+            usernameInput.setCustomValidity('Username must contain only letters, numbers, underscores, and hyphens');
+        }
+    });
+
+    // Form submission validation
+    form.addEventListener('submit', function(event) {
+        if (!form.checkValidity()) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+        form.classList.add('was-validated');
+    });
+});
+</script>
 {% endblock %}

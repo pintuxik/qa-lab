@@ -174,15 +174,8 @@ class TestTaskModel:
         task = Task(title="Orphan task")
         db_session.add(task)
 
-        # Note: SQLite doesn't enforce NOT NULL on ForeignKey without explicit nullable=False
-        # This test documents current behavior
-        try:
+        with pytest.raises(IntegrityError):
             db_session.commit()
-            # If it succeeds, owner_id can be NULL in SQLite
-            assert task.owner_id is None
-        except IntegrityError:
-            # If it fails, NOT NULL is enforced
-            pass
 
     def test_task_foreign_key_constraint(self, db_session):
         """Test that owner_id must reference a valid user."""
@@ -192,15 +185,8 @@ class TestTaskModel:
         )
         db_session.add(task)
 
-        # Note: SQLite doesn't enforce foreign key constraints by default
-        # This test documents current behavior
-        try:
+        with pytest.raises(IntegrityError):
             db_session.commit()
-            # If it succeeds, FK constraints are not enforced
-            assert task.owner_id == 99999
-        except IntegrityError:
-            # If it fails, FK constraints are enforced
-            pass
 
     def test_task_cascade_delete_on_user_deletion(self, db_session):
         """Test that tasks are deleted when user is deleted."""
