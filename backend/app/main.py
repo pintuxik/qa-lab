@@ -1,19 +1,18 @@
-import os
 from contextlib import asynccontextmanager
 
 from app.api import auth, tasks
 from app.core.config import settings
-from app.database import Base, engine
-from fastapi import FastAPI
+from app.database import SessionLocal
+from fastapi import FastAPI, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from sqlalchemy import text
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Manage application lifespan events."""
-    # Startup: Create database tables
-    if os.getenv("TESTING") != "true":
-        Base.metadata.create_all(bind=engine)
+    # Startup: Database tables are created via Alembic migrations
     yield
     # Shutdown: cleanup if needed
 
@@ -47,4 +46,27 @@ async def root():
 
 @app.get("/health")
 async def health_check():
-    return {"status": "healthy"}
+    """Health check endpoint for Kubernetes liveness probe."""
+    return {"status": "healthy", "service": "backend"}
+
+
+@app.get("/ready")
+async def readiness_check():
+    """
+    Readiness check endpoint for Kubernetes readiness probe.
+    Checks database connectivity.
+    """
+    try:
+        # Test database connection
+        db = SessionLocal()
+        db.execute(text("SELECT 1"))
+        db.close()
+        return JSONResponse(
+            status_code=status.HTTP_200_OK,
+            content={"status": "ready", "database": "connected", "service": "backend"},
+        )
+    except Exception as e:
+        return JSONResponse(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            content={"status": "not ready", "database": "disconnected", "error": str(e), "service": "backend"},
+        )

@@ -168,3 +168,30 @@ def register_routes(app):
             flash("Failed to delete task", "error")
 
         return redirect(url_for("dashboard"))
+
+    @app.route("/health")
+    def health_check():
+        """Health check endpoint for Kubernetes liveness probe."""
+        return {"status": "healthy", "service": "frontend"}, 200
+
+    @app.route("/ready")
+    def readiness_check():
+        """
+        Readiness check endpoint for Kubernetes readiness probe.
+        Checks backend connectivity.
+        """
+        try:
+            # Test backend connection
+            response = requests.get(f"{API_BASE_URL}/health", timeout=5)
+            if response.status_code == 200:
+                return {"status": "ready", "backend": "connected", "service": "frontend"}, 200
+            else:
+                return (
+                    {"status": "not ready", "backend": "unhealthy", "service": "frontend"},
+                    503,
+                )
+        except requests.exceptions.RequestException as e:
+            return (
+                {"status": "not ready", "backend": "disconnected", "error": str(e), "service": "frontend"},
+                503,
+            )

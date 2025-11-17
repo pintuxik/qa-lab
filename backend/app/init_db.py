@@ -10,7 +10,6 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from app.core.config import settings
 from app.core.security import get_password_hash
-from app.database import Base
 from app.models import User
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -20,10 +19,6 @@ def create_admin_user():
     """Create default admin user"""
     engine = create_engine(settings.DATABASE_URL)
     SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-    # Create tables if they don't exist
-    Base.metadata.create_all(bind=engine)
-
     db = SessionLocal()
     try:
         # Check if admin user already exists

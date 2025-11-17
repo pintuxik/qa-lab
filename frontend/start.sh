@@ -11,4 +11,4 @@ fi
 
 # Start the Flask application
 echo "Starting Flask application..."
-uv run granian --interface wsgi app.main:app --backpressure $NPROC_ADJUSTED --host 0.0.0.0 --port 5001 
+granian --interface wsgi app.main:app --backpressure $NPROC_ADJUSTED --host 0.0.0.0 --port 5001
