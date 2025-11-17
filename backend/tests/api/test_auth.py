@@ -3,7 +3,6 @@ Unit tests for authentication endpoints.
 """
 
 from fastapi import status
-
 from tests.test_data import Endpoints, TestHelpers, TestUsers
 
 

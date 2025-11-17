@@ -53,7 +53,7 @@ class UserCreate(UserBase):
             errors.append("special character (@$!%*?&)")
 
         if errors:
-            raise ValueError(f'Password must contain at least one: {", ".join(errors)}')
+            raise ValueError(f"Password must contain at least one: {', '.join(errors)}")
         return v
 
 
