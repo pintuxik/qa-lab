@@ -11,11 +11,14 @@ RUN apt-get update && apt-get install -y postgresql-client \
 # Workdir
 WORKDIR /app
 
-# Copy application code
-COPY . .
+# Copy pyproject.toml
+COPY pyproject.toml pyproject.toml
 
 # Install dependencies
 RUN uv sync
+
+# Copy application code
+COPY . .
 
 # Make start script executable
 RUN chmod +x start.sh

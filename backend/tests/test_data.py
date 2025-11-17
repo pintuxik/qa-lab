@@ -298,9 +298,9 @@ class TestHelpers:
             field: Field name to check for error
         """
         errors = exc_info.value.errors()
-        assert any(
-            error["loc"] == (field,) for error in errors
-        ), f"Expected validation error on field '{field}', but got errors on: {[e['loc'] for e in errors]}"
+        assert any(error["loc"] == (field,) for error in errors), (
+            f"Expected validation error on field '{field}', but got errors on: {[e['loc'] for e in errors]}"
+        )
 
     @staticmethod
     def assert_validation_error_type(exc_info, field: str, error_type: str):
@@ -313,9 +313,9 @@ class TestHelpers:
             error_type: Expected error type (e.g., "string_too_short", "literal_error")
         """
         errors = exc_info.value.errors()
-        assert any(
-            error["loc"] == (field,) and error["type"] == error_type for error in errors
-        ), f"Expected '{error_type}' error on field '{field}'"
+        assert any(error["loc"] == (field,) and error["type"] == error_type for error in errors), (
+            f"Expected '{error_type}' error on field '{field}'"
+        )
 
     @staticmethod
     def assert_validation_error_on_fields(exc_info, *fields: str):
@@ -330,9 +330,9 @@ class TestHelpers:
         error_fields = {error["loc"][0] for error in errors if error["loc"]}
 
         for field in fields:
-            assert (
-                field in error_fields
-            ), f"Expected validation error on field '{field}', but got errors on: {error_fields}"
+            assert field in error_fields, (
+                f"Expected validation error on field '{field}', but got errors on: {error_fields}"
+            )
 
     @staticmethod
     def get_current_datetime() -> datetime:

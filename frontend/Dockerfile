@@ -7,11 +7,14 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 # Set working directory
 WORKDIR /app
 
-# Copy application code
-COPY . .
+# Copy pyproject.toml
+COPY pyproject.toml pyproject.toml
 
 # Install dependencies
 RUN uv sync
+
+# Copy application code
+COPY . .
 
 # Expose port
 EXPOSE 5001
