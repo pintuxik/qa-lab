@@ -30,6 +30,7 @@ from utils.utils import get_screenshot_path
 # URLs
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5001")
 API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000")
+TEST_API_KEY = os.getenv("TEST_API_KEY", "your-super-secret-key-change-in-production")
 
 
 @pytest.fixture(scope="session")
@@ -181,8 +182,8 @@ def test_user_credentials():
     """Generate unique test user credentials per test."""
     unique_id = str(uuid.uuid4())[:8]  # First 8 chars of UUID
     return {
-        "username": f"uiuser_{unique_id}",
-        "email": f"uiuser_{unique_id}@example.com",
+        "username": f"ui_user_{unique_id}",
+        "email": f"ui_user_{unique_id}@example.com",
         "password": "TestPass123!",
     }
 
@@ -192,6 +193,7 @@ def registered_test_user(api_session, test_user_credentials):
     """Register a new test user via API (fast, deterministic).
 
     Returns dict with user credentials and ID.
+    Cleans up the user after the test completes.
     """
     with allure.step("Register test user via API"):
         response = api_session.post(
@@ -208,7 +210,32 @@ def registered_test_user(api_session, test_user_credentials):
             attachment_type=allure.attachment_type.TEXT,
         )
 
-    return {**test_user_credentials, "id": user_data.get("id")}
+    user_info = {**test_user_credentials, "id": user_data.get("id")}
+    yield user_info
+
+    # Cleanup: Delete test user after test completes
+    if TEST_API_KEY:
+        with allure.step("Cleanup test user via test-cleanup endpoint"):
+            try:
+                cleanup_response = api_session.post(
+                    f"{API_BASE_URL}/api/auth/test-cleanup",
+                    json={"user_ids": [user_info["id"]]},
+                    headers={"X-Test-API-Key": TEST_API_KEY},
+                    timeout=10,
+                )
+                if cleanup_response.status_code == 200:
+                    allure.attach(
+                        f"Deleted user: {user_info['username']} (ID: {user_info['id']})",
+                        name="Test User Cleanup",
+                        attachment_type=allure.attachment_type.TEXT,
+                    )
+            except Exception as e:
+                # Log cleanup failure but don't fail the test
+                allure.attach(
+                    f"Failed to cleanup user {user_info['username']}: {str(e)}",
+                    name="Cleanup Warning",
+                    attachment_type=allure.attachment_type.TEXT,
+                )
 
 
 @pytest.fixture(scope="function")

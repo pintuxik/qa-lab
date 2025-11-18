@@ -4,6 +4,7 @@ Integration tests for Authentication API endpoints.
 
 import allure
 import pytest
+from conftest import TEST_API_KEY
 
 
 @allure.feature("Authentication API")
@@ -38,6 +39,29 @@ class TestUserRegistration:
             assert response_data["username"] == user_data["username"]
             assert response_data["email"] == user_data["email"]
             assert "hashed_password" not in response_data, "Password should not be exposed"
+
+        # Cleanup: Delete test user using secure test-cleanup endpoint
+        if TEST_API_KEY:
+            with allure.step("Cleanup test user via test-cleanup endpoint"):
+                try:
+                    response = api_client.post(
+                        f"{api_base_url}/api/auth/test-cleanup",
+                        json={"user_ids": [response_data["id"]]},
+                        headers={"X-Test-API-Key": TEST_API_KEY},
+                    )
+                    assert response.status_code == 200, f"Failed to cleanup user: {response.text}"
+                    allure.attach(
+                        f"Deleted user: {response_data['username']} (ID: {response_data['id']})",
+                        name="Test User Cleanup",
+                        attachment_type=allure.attachment_type.TEXT,
+                    )
+                except Exception as e:
+                    # Log cleanup failure but don't fail the test
+                    allure.attach(
+                        f"Failed to cleanup user {response_data['username']}: {str(e)}",
+                        name="Cleanup Warning",
+                        attachment_type=allure.attachment_type.TEXT,
+                    )
 
     @allure.severity(allure.severity_level.NORMAL)
     @allure.title("Register user with duplicate email")
@@ -91,8 +115,8 @@ class TestUserRegistration:
         "invalid_data,expected_field",
         [
             ({"email": "test@example.com", "password": "pass"}, "username"),
-            ({"username": "testuser", "password": "pass"}, "email"),
-            ({"username": "testuser", "email": "test@example.com"}, "password"),
+            ({"username": "api_user", "password": "pass"}, "email"),
+            ({"username": "api_user", "email": "test@example.com"}, "password"),
         ],
     )
     def test_register_missing_fields(self, api_client, api_base_url, invalid_data, expected_field):

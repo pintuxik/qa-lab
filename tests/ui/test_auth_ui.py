@@ -16,6 +16,7 @@ import time
 
 import allure
 import pytest
+from conftest import TEST_API_KEY
 from playwright.sync_api import Page, expect
 
 # Frontend URL
@@ -31,7 +32,7 @@ class TestUserRegistration:
     @allure.title("Register new user through UI")
     @allure.description("Verify that a new user can register through the registration form")
     @pytest.mark.ui
-    def test_register_new_user(self, page: Page):
+    def test_register_new_user(self, page: Page, api_client, api_base_url):
         """Test successful user registration."""
         unique_id = f"{int(time.time() * 1000)}"
 
@@ -40,8 +41,8 @@ class TestUserRegistration:
             expect(page).to_have_url(f"{FRONTEND_URL}/register")
 
         with allure.step("Fill registration form"):
-            page.fill('input[name="username"]', f"uitest_{unique_id}")
-            page.fill('input[name="email"]', f"uitest_{unique_id}@example.com")
+            page.fill('input[name="username"]', f"ui_user_{unique_id}")
+            page.fill('input[name="email"]', f"ui_user_{unique_id}@example.com")
             page.fill('input[name="password"]', "TestPass123!")
 
         with allure.step("Submit registration form"):
@@ -55,6 +56,15 @@ class TestUserRegistration:
             # Check for success flash message
             success_message = page.locator(".alert-success")
             expect(success_message).to_be_visible()
+
+        with allure.step("Cleanup test user"):
+            if TEST_API_KEY:
+                response = api_client.post(
+                    f"{api_base_url}/api/auth/test-cleanup",
+                    json={"username_patterns": ["ui_user_*"]},
+                    headers={"X-Test-API-Key": TEST_API_KEY},
+                )
+                assert response.status_code == 200, f"Failed to cleanup user: {response.text}"
 
     @allure.severity(allure.severity_level.NORMAL)
     @allure.title("Registration form validation")
@@ -97,27 +107,15 @@ class TestUserLogin:
     @allure.title("Login with valid credentials")
     @allure.description("Verify that user can login with valid credentials")
     @pytest.mark.ui
-    def test_login_success(self, page: Page):
+    def test_login_success(self, page: Page, registered_test_user):
         """Test successful login."""
-        unique_id = f"{int(time.time() * 1000)}"
-        username = f"logintest_{unique_id}"
-        password = "TestPass123!"
-
-        with allure.step("Register a test user first"):
-            page.goto(f"{FRONTEND_URL}/register")
-            page.fill('input[name="username"]', username)
-            page.fill('input[name="email"]', f"{username}@example.com")
-            page.fill('input[name="password"]', password)
-            page.click('button[type="submit"]')
-            page.wait_for_url(f"{FRONTEND_URL}/login")
-
         with allure.step("Navigate to login page"):
             page.goto(f"{FRONTEND_URL}/login")
             expect(page).to_have_url(f"{FRONTEND_URL}/login")
 
         with allure.step("Fill login form"):
-            page.fill('input[name="username"]', username)
-            page.fill('input[name="password"]', password)
+            page.fill('input[name="username"]', registered_test_user.get("username"))
+            page.fill('input[name="password"]', registered_test_user.get("password"))
 
         with allure.step("Submit login form"):
             page.click('button[type="submit"]')

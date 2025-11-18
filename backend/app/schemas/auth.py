@@ -31,3 +31,19 @@ class TokenData(BaseModel):
             ]
         }
     )
+
+
+class TestCleanupRequest(BaseModel):
+    user_ids: Optional[list[int]] = None
+    username_patterns: Optional[list[str]] = None
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "examples": [
+                {
+                    "user_ids": [123, 456],
+                    "username_patterns": ["ui_user_*", "api_user_*"],
+                }
+            ]
+        }
+    )
