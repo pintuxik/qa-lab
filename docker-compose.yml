@@ -23,7 +23,7 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - DATABASE_URL=postgresql://postgres:password@db:5432/taskmanager
+      - DATABASE_URL=postgresql+psycopg://postgres:password@db:5432/taskmanager
       - SECRET_KEY=your-super-secret-key-change-in-production
       - FRONTEND_URL=http://localhost:5001
     depends_on:

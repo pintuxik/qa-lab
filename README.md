@@ -265,7 +265,7 @@ python3 -c "import secrets; print(secrets.token_urlsafe(32))"
 
 **Backend (.env)**
 ```
-DATABASE_URL=postgresql://postgres:password@db:5432/taskmanager
+DATABASE_URL=postgresql+psycopg://postgres:password@db:5432/taskmanager
 SECRET_KEY=<your-generated-secret-key>
 ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=30
