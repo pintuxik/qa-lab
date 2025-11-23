@@ -220,8 +220,11 @@ class TestApplicationMetadata:
         schema = response.json()
 
         # Check that endpoints have proper tags
-        auth_register = schema["paths"][Endpoints.AUTH_REGISTER]["post"]
-        assert "authentication" in auth_register["tags"]
+        user_register = schema["paths"][Endpoints.USERS]["post"]
+        assert "users" in user_register["tags"]
+
+        auth_login = schema["paths"]["/api/auth/login"]["post"]
+        assert "authentication" in auth_login["tags"]
 
         # OpenAPI schema uses trailing slash for router endpoints
         tasks_list = schema["paths"]["/api/tasks/"]["get"]

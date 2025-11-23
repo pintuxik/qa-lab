@@ -8,8 +8,12 @@ class Endpoints:
     """API endpoint constants."""
 
     # Auth endpoints
-    AUTH_REGISTER = "/api/auth/register"
     AUTH_LOGIN = "/api/auth/login"
+
+    # User endpoints
+    USERS = "/api/users/"
+    USER_ME = "/api/users/me"
+    AUTH_REGISTER = "/api/users/"  # Kept for backward compatibility in tests
 
     # Task endpoints
     TASKS = "/api/tasks"

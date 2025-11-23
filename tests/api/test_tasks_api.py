@@ -439,7 +439,7 @@ class TestTaskIsolation:
                 "email": f"api_user_1_{unique_id}@example.com",
                 "password": "Pass123!",
             }
-            response1 = api_client.post(f"{api_base_url}/api/auth/register", json=user1_data)
+            response1 = api_client.post(f"{api_base_url}/api/users/", json=user1_data)
             login1 = api_client.post(
                 f"{api_base_url}/api/auth/login",
                 data={"username": user1_data["username"], "password": user1_data["password"]},
@@ -459,7 +459,7 @@ class TestTaskIsolation:
                 "email": f"api_user_2_{unique_id}@example.com",
                 "password": "Pass123!",
             }
-            response2 = api_client.post(f"{api_base_url}/api/auth/register", json=user2_data)
+            response2 = api_client.post(f"{api_base_url}/api/users/", json=user2_data)
             login2 = api_client.post(
                 f"{api_base_url}/api/auth/login",
                 data={"username": user2_data["username"], "password": user2_data["password"]},
@@ -480,7 +480,7 @@ class TestTaskIsolation:
                 user_ids = [response1.json()["id"], response2.json()["id"]]
                 try:
                     response = api_client.post(
-                        f"{api_base_url}/api/auth/test-cleanup",
+                        f"{api_base_url}/api/users/test-cleanup",
                         json={"user_ids": user_ids},
                         headers={"X-Test-API-Key": TEST_API_KEY},
                     )

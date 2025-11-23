@@ -17,7 +17,6 @@ from app.core.security import get_password_hash
 from app.database import Base, get_db
 from app.main import app
 from app.models import Task, User
-
 from tests.test_data import Endpoints, TestUsers
 
 # Use in-memory SQLite for testing

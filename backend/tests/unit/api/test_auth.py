@@ -13,7 +13,7 @@ class TestUserRegistration:
         """Test successful user registration."""
         response = client.post(Endpoints.AUTH_REGISTER, json=TestUsers.NEW_USER)
 
-        assert response.status_code == status.HTTP_200_OK
+        assert response.status_code == status.HTTP_201_CREATED
         data = response.json()
         TestHelpers.assert_valid_user_response(data)
         assert data["username"] == TestUsers.NEW_USER["username"]
@@ -253,7 +253,7 @@ class TestUserRegistrationNegativeCases:
         )
 
         # Should succeed, extra fields should be ignored
-        assert response.status_code == status.HTTP_200_OK
+        assert response.status_code == status.HTTP_201_CREATED
         data = response.json()
         # User should not be admin
         assert data["is_admin"] is False
@@ -269,7 +269,7 @@ class TestUserRegistrationNegativeCases:
         )
 
         # SQLite is case-sensitive, so this should succeed
-        assert response.status_code == status.HTTP_200_OK
+        assert response.status_code == status.HTTP_201_CREATED
 
     def test_register_case_sensitive_username(self, client, test_user):
         """Test if username comparison is case-sensitive."""
@@ -282,7 +282,7 @@ class TestUserRegistrationNegativeCases:
         )
 
         # SQLite is case-sensitive, so this should succeed
-        assert response.status_code == status.HTTP_200_OK
+        assert response.status_code == status.HTTP_201_CREATED
 
 
 class TestUserLoginNegativeCases:

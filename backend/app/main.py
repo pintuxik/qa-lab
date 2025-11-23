@@ -1,8 +1,8 @@
 from contextlib import asynccontextmanager
 
-from app.api import auth, tasks
 from app.core.config import settings
 from app.database import SessionLocal
+from app.routers import auth, task, user
 from fastapi import FastAPI, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -36,7 +36,8 @@ app.add_middleware(
 
 # Include routers
 app.include_router(auth.router, prefix="/api/auth", tags=["authentication"])
-app.include_router(tasks.router, prefix="/api/tasks", tags=["tasks"])
+app.include_router(user.router, prefix="/api/users", tags=["users"])
+app.include_router(task.router, prefix="/api/tasks", tags=["tasks"])
 
 
 @app.get("/")

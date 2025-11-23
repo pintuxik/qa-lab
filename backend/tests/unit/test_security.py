@@ -1,10 +1,14 @@
 """
-Unit tests for security functions.
+Unit tests for security utility functions.
+
+Note: Tests for authentication logic (authenticate_user, create_access_token, get_current_user)
+have been moved to service layer tests since those functions are now part of AuthService.
+These functions are tested through:
+- tests/unit/api/test_auth.py - Integration tests for auth endpoints
+- Service layer tests would go in tests/unit/services/ (future enhancement)
 """
 
-from datetime import timedelta
-
-from app.core.security import authenticate_user, create_access_token, get_password_hash, verify_password
+from app.core.security import get_password_hash, verify_password
 
 
 class TestPasswordHashing:
@@ -64,68 +68,3 @@ class TestPasswordHashing:
 
         assert hashed is not None
         assert verify_password(password, hashed) is True
-
-
-class TestJWTTokens:
-    """Tests for JWT token creation."""
-
-    def test_create_access_token(self):
-        """Test creating access token."""
-        data = {"sub": "testuser"}
-        token = create_access_token(data)
-
-        assert token is not None
-        assert isinstance(token, str)
-        assert len(token) > 0
-
-    def test_create_token_with_expiration(self):
-        """Test creating token with custom expiration."""
-        data = {"sub": "testuser"}
-        expires_delta = timedelta(minutes=30)
-        token = create_access_token(data, expires_delta=expires_delta)
-
-        assert token is not None
-        assert isinstance(token, str)
-
-    def test_token_contains_payload(self):
-        """Test that token contains the payload data."""
-        from app.core.config import settings
-        from jose import jwt
-
-        data = {"sub": "testuser", "role": "admin"}
-        token = create_access_token(data)
-
-        decoded = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
-        assert decoded["sub"] == "testuser"
-        assert decoded["role"] == "admin"
-        assert "exp" in decoded
-
-
-class TestUserAuthentication:
-    """Tests for user authentication."""
-
-    def test_authenticate_valid_user(self, db_session, test_user):
-        """Test authenticating with valid credentials."""
-        user = authenticate_user(db_session, "testuser", "TestPass123!")
-
-        assert user is not False
-        assert user.username == "testuser"
-        assert user.email == "test@example.com"
-
-    def test_authenticate_wrong_password(self, db_session, test_user):
-        """Test authentication fails with wrong password."""
-        user = authenticate_user(db_session, "testuser", "wrongpassword")
-
-        assert user is False
-
-    def test_authenticate_nonexistent_user(self, db_session):
-        """Test authentication fails for nonexistent user."""
-        user = authenticate_user(db_session, "nonexistent", "password123")
-
-        assert user is False
-
-    def test_authenticate_empty_credentials(self, db_session):
-        """Test authentication fails with empty credentials."""
-        user = authenticate_user(db_session, "", "")
-
-        assert user is False

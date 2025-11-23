@@ -6,7 +6,6 @@ import pytest
 from app.schemas.task import Task, TaskBase, TaskCreate, TaskUpdate
 from app.schemas.user import User, UserBase, UserCreate
 from pydantic import ValidationError
-
 from tests.test_data import TestHelpers
 
 

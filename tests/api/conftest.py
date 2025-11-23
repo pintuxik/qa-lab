@@ -79,10 +79,10 @@ def registered_user(api_client, api_base_url, test_user_credentials):
     """Create and return a registered test user. Cleans up after test completes."""
     with allure.step("Register test user"):
         response = api_client.post(
-            f"{api_base_url}/api/auth/register",
+            f"{api_base_url}/api/users/",
             json=test_user_credentials,
         )
-        assert response.status_code == 200, f"Failed to register user: {response.text}"
+        assert response.status_code == 201, f"Failed to register user: {response.text}"
         user_data = response.json()
         allure.attach(
             str(user_data),
@@ -98,7 +98,7 @@ def registered_user(api_client, api_base_url, test_user_credentials):
         with allure.step("Cleanup test user via test-cleanup endpoint"):
             try:
                 response = api_client.post(
-                    f"{api_base_url}/api/auth/test-cleanup",
+                    f"{api_base_url}/api/users/test-cleanup",
                     json={"user_ids": [user_info["id"]]},
                     headers={"X-Test-API-Key": TEST_API_KEY},
                 )

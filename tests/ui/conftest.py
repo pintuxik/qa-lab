@@ -169,6 +169,36 @@ def allure_environment_info():
 # ============================================================================
 
 
+@pytest.fixture(scope="session")
+def api_base_url():
+    """Provide the base URL for API requests."""
+    return API_BASE_URL
+
+
+@pytest.fixture(scope="function")
+def api_client():
+    """Provide a requests session for API calls with global timeout (alias for api_session).
+
+    This fixture provides the same functionality as api_session but with the name
+    expected by some tests. Default timeout of 10 seconds per repo standards.
+    """
+    session = requests.Session()
+
+    # Monkey-patch request methods to apply default timeout (10 seconds)
+    original_request = session.request
+
+    def request_with_timeout(method, url, **kwargs):
+        # Only set timeout if not already specified
+        if "timeout" not in kwargs:
+            kwargs["timeout"] = 10  # 10 seconds
+        return original_request(method, url, **kwargs)
+
+    session.request = request_with_timeout
+
+    yield session
+    session.close()
+
+
 @pytest.fixture(scope="function")
 def api_session():
     """Provide a requests session with global timeout for API calls."""
@@ -197,11 +227,11 @@ def registered_test_user(api_session, test_user_credentials):
     """
     with allure.step("Register test user via API"):
         response = api_session.post(
-            f"{API_BASE_URL}/api/auth/register",
+            f"{API_BASE_URL}/api/users/",
             json=test_user_credentials,
             timeout=10,
         )
-        assert response.status_code == 200, f"Failed to register user: {response.text}"
+        assert response.status_code == 201, f"Failed to register user: {response.text}"
         user_data = response.json()
 
         allure.attach(
@@ -218,7 +248,7 @@ def registered_test_user(api_session, test_user_credentials):
         with allure.step("Cleanup test user via test-cleanup endpoint"):
             try:
                 cleanup_response = api_session.post(
-                    f"{API_BASE_URL}/api/auth/test-cleanup",
+                    f"{API_BASE_URL}/api/users/test-cleanup",
                     json={"user_ids": [user_info["id"]]},
                     headers={"X-Test-API-Key": TEST_API_KEY},
                     timeout=10,

@@ -78,10 +78,10 @@ def register_routes(app):
             password = request.form["password"]
 
             response = make_api_request(
-                "POST", "/api/auth/register", {"username": username, "email": email, "password": password}
+                "POST", "/api/users/", {"username": username, "email": email, "password": password}
             )
 
-            if response and response.status_code == 200:
+            if response and response.status_code == 201:
                 flash("Registration successful! Please login.", "success")
                 return redirect(url_for("login"))
             else:
