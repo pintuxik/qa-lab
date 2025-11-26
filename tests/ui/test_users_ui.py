@@ -52,7 +52,7 @@ class TestUserRegistration:
             if TEST_API_KEY:
                 response = api_client.post(
                     f"{api_base_url}/api/users/test-cleanup",
-                    json={"username_patterns": ["ui_user_*"]},
+                    json={"username_patterns": [unique_id]},
                     headers={"X-Test-API-Key": TEST_API_KEY},
                 )
                 assert response.status_code == 200, f"Failed to cleanup user: {response.text}"
