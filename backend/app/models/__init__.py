@@ -1,4 +1,6 @@
+from app.database import Base
+
 from .task import Task
 from .user import User
 
-__all__ = ["User", "Task"]
+__all__ = ["Base", "User", "Task"]

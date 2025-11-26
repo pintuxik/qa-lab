@@ -11,8 +11,7 @@ from sqlalchemy import engine_from_config, pool
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 from app.core.config import settings
-from app.database import Base
-from app.models import task, user  # noqa: F401 - Import models to register them with Base
+from app.models import Base, Task, User  # noqa: F401 - Import models to register them with Base
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
