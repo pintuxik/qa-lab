@@ -14,7 +14,7 @@ NC='\033[0m' # No Color
 
 # Default values
 FRONTEND_URL="${FRONTEND_URL:-http://localhost:5001}"
-HEADLESS="${HEADLESS:-false}"
+HEADLESS="${HEADLESS:-true}"
 ALLURE_REPORT="${ALLURE_REPORT:-false}"
 TEST_PATTERN="${TEST_PATTERN:-tests/ui/}"
 BROWSER="${BROWSER:-chromium}"
@@ -63,8 +63,8 @@ OPTIONS:
     -a, --allure            Generate Allure report after tests
     -t, --test PATTERN      Test pattern to run (default: tests/ui/)
     -b, --browser BROWSER   Browser to use (chromium/firefox/webkit, default: chromium)
-    --headless              Run in headless mode
-    --headed                Run in headed mode (default)
+    --headless              Run in headless mode (default)
+    --headed                Run in headed mode
     -s, --skip-check        Skip frontend availability check
     -v, --verbose           Run tests in verbose mode
 
@@ -72,8 +72,8 @@ EXAMPLES:
     # Run all UI tests
     $0
 
-    # Run in headless mode
-    $0 --headless
+    # Run in headed mode
+    $0 --headed
 
     # Run specific test file
     $0 --test tests/ui/test_auth_ui.py

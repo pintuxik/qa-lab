@@ -105,7 +105,7 @@ echo ""
 # UI Integration Tests
 echo -e "${BLUE}🎭 Running UI Integration Tests...${NC}"
 echo "----------------------------"
-if ./run_ui_tests.sh --skip-check; then # TODO: add --headless after demo period
+if ./run_ui_tests.sh --skip-check; then
     echo -e "${GREEN}✅ UI integration tests passed!${NC}"
     UI_PASSED=1
 else
