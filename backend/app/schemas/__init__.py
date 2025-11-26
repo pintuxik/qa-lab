@@ -1,6 +1,6 @@
-from .auth import TestCleanupRequest, Token, TokenData
+from .auth import Token, TokenData
 from .task import Task, TaskBase, TaskCreate, TaskUpdate
-from .user import User, UserBase, UserCreate
+from .user import TestCleanupRequest, User, UserBase, UserCreate
 
 __all__ = [
     "UserBase",

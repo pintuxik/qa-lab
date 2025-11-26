@@ -1,6 +1,6 @@
 import re
 from datetime import datetime
-from typing import Annotated
+from typing import Annotated, Optional
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
@@ -64,3 +64,19 @@ class User(UserBase):
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class TestCleanupRequest(BaseModel):
+    user_ids: Optional[list[int]] = None
+    username_patterns: Optional[list[str]] = None
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "examples": [
+                {
+                    "user_ids": [123, 456],
+                    "username_patterns": ["ui_user_*", "api_user_*"],
+                }
+            ]
+        }
+    )
