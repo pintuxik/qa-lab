@@ -13,32 +13,6 @@ RED='\033[0;31m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
-# Function to clean broken venv
-clean_venv() {
-    local dir=$1
-    if [ -d "$dir/.venv" ] && [ ! -f "$dir/.venv/bin/python" ]; then
-        echo -e "${YELLOW}⚠️  Cleaning broken virtual environment in $dir...${NC}"
-        # Try to make it writable first
-        chmod -R u+w "$dir/.venv" 2>/dev/null || true
-        # Remove it
-        rm -rf "$dir/.venv" 2>/dev/null || {
-            echo -e "${YELLOW}⚠️  Could not remove .venv, trying with sudo...${NC}"
-            sudo rm -rf "$dir/.venv" 2>/dev/null || {
-                echo -e "${RED}❌ Failed to remove broken venv. Please run: sudo rm -rf $dir/.venv${NC}"
-                return 1
-            }
-        }
-        echo -e "${GREEN}✓ Cleaned up broken venv${NC}"
-    fi
-    return 0
-}
-
-# Clean up any broken virtual environments first
-echo "Checking for broken virtual environments..."
-clean_venv "backend"
-clean_venv "frontend"
-echo ""
-
 # Track test results
 BACKEND_PASSED=0
 FRONTEND_PASSED=0
@@ -51,7 +25,7 @@ export PYTEST_ADDOPTS="-n auto"
 # Backend Tests
 echo -e "${BLUE}📦 Running Backend Tests...${NC}"
 echo "----------------------------"
-cd backend
+cd ../backend || exit
 
 # Sync dependencies
 echo "Installing dependencies..."
@@ -72,7 +46,7 @@ echo ""
 # Frontend Tests
 echo -e "${BLUE}🎨 Running Frontend Tests...${NC}"
 echo "----------------------------"
-cd frontend
+cd frontend || exit
 
 # Sync dependencies
 echo "Installing dependencies..."
@@ -91,9 +65,10 @@ cd ..
 echo ""
 
 # API Integration Tests
+cd tests || exit
 echo -e "${BLUE}🔌 Running API Integration Tests...${NC}"
 echo "----------------------------"
-if ./run_api_tests.sh --skip-check; then
+if ./run_api_tests.sh --skip-check -v; then
     echo -e "${GREEN}✅ API integration tests passed!${NC}"
     API_PASSED=1
 else
@@ -105,7 +80,7 @@ echo ""
 # UI Integration Tests
 echo -e "${BLUE}🎭 Running UI Integration Tests...${NC}"
 echo "----------------------------"
-if ./run_ui_tests.sh --skip-check; then
+if ./run_ui_tests.sh --skip-check -v; then
     echo -e "${GREEN}✅ UI integration tests passed!${NC}"
     UI_PASSED=1
 else

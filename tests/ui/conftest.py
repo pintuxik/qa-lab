@@ -23,9 +23,8 @@ from typing import Generator
 import allure
 import pytest
 import requests
+from common.utils import get_screenshot_path
 from playwright.sync_api import Browser, BrowserContext, Page, sync_playwright
-
-from utils.utils import get_screenshot_path
 
 # URLs
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5001")

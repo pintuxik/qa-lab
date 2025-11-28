@@ -1,9 +1,10 @@
 from typing import List, Optional
 
+from sqlalchemy.orm import Session
+
 from app.models import Task
 from app.repositories import BaseRepository
 from app.schemas import TaskCreate
-from sqlalchemy.orm import Session
 
 
 class TaskRepository(BaseRepository[Task]):

@@ -2,24 +2,13 @@
 
 This directory contains comprehensive unit tests for the FastAPI backend.
 
-## Test Structure
-
-```
-tests/
-├── __init__.py
-├── conftest.py          # Pytest fixtures and configuration
-├── test_auth.py         # Authentication endpoint tests
-├── test_tasks.py        # Task management endpoint tests
-└── test_security.py     # Security function tests
-```
-
 ## Running Tests
 
 ### Install Test Dependencies
 
 ```bash
 cd backend
-uv sync --extra test
+uv sync --group test
 ```
 
 ### Run All Tests
@@ -58,8 +47,7 @@ uv run pytest -s
 After running tests with coverage, open the HTML report:
 
 ```bash
-open htmlcov/index.html  # macOS
-xdg-open htmlcov/index.html  # Linux
+htmlcov/index.html
 ```
 
 ## Test Categories

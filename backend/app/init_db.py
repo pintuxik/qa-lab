@@ -8,11 +8,12 @@ import sys
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+
 from app.core.config import settings
 from app.core.security import get_password_hash
 from app.models import User
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
 
 
 def create_admin_user():

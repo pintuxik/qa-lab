@@ -1,11 +1,12 @@
 from typing import Optional
 
+from fastapi import HTTPException
+from sqlalchemy.orm import Session
+
 from app.core.security import get_password_hash
 from app.models import User
 from app.repositories import UserRepository
 from app.schemas import TestCleanupRequest, UserCreate
-from fastapi import HTTPException
-from sqlalchemy.orm import Session
 
 
 class UserService:

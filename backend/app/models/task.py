@@ -1,10 +1,11 @@
 from datetime import datetime
 from typing import TYPE_CHECKING, Literal, Optional
 
-from app.database import Base
 from sqlalchemy import CheckConstraint, DateTime, ForeignKey, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
+
+from app.database import Base
 
 if TYPE_CHECKING:
     from app.models.user import User

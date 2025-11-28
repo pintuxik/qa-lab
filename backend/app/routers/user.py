@@ -1,12 +1,13 @@
 """User management router - handles user CRUD operations."""
 
+from fastapi import APIRouter, Depends, Header, HTTPException, status
+
 from app.core.config import settings
 from app.models import User
 from app.routers.dependencies import get_current_user, get_user_service
 from app.schemas import TestCleanupRequest, UserCreate
 from app.schemas import User as UserSchema
 from app.services import UserService
-from fastapi import APIRouter, Depends, Header, HTTPException, status
 
 router = APIRouter()
 

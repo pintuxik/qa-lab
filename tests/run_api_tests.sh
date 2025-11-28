@@ -15,7 +15,7 @@ NC='\033[0m' # No Color
 # Default values
 API_BASE_URL="${API_BASE_URL:-http://localhost:8000}"
 ALLURE_REPORT="${ALLURE_REPORT:-false}"
-TEST_PATTERN="${TEST_PATTERN:-tests/api/}"
+TEST_PATTERN="${TEST_PATTERN:-api/}"
 MARKERS="${MARKERS:-integration}"
 
 # Function to print colored output

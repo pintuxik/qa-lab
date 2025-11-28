@@ -16,7 +16,7 @@ NC='\033[0m' # No Color
 FRONTEND_URL="${FRONTEND_URL:-http://localhost:5001}"
 HEADLESS="${HEADLESS:-true}"
 ALLURE_REPORT="${ALLURE_REPORT:-false}"
-TEST_PATTERN="${TEST_PATTERN:-tests/ui/}"
+TEST_PATTERN="${TEST_PATTERN:-ui/}"
 BROWSER="${BROWSER:-chromium}"
 
 # Function to print colored output
@@ -61,7 +61,7 @@ OPTIONS:
     -h, --help              Show this help message
     -u, --url URL           Frontend URL (default: http://localhost:5001)
     -a, --allure            Generate Allure report after tests
-    -t, --test PATTERN      Test pattern to run (default: tests/ui/)
+    -t, --test PATTERN      Test pattern to run (default: ui/)
     -b, --browser BROWSER   Browser to use (chromium/firefox/webkit, default: chromium)
     --headless              Run in headless mode (default)
     --headed                Run in headed mode
@@ -76,7 +76,7 @@ EXAMPLES:
     $0 --headed
 
     # Run specific test file
-    $0 --test tests/ui/test_auth_ui.py
+    $0 --test ui/test_auth_ui.py
 
     # Run with Allure report
     $0 --allure
@@ -136,8 +136,25 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
+# Detecting platform
+if [ "$(uname)" == "Darwin" ]; then
+    PLATFORM="Darwin"
+elif [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]; then
+    PLATFORM="Linux"
+else
+    PLATFORM=""
+fi
 # Check if Playwright browsers are already installed to avoid triggering Docker reload
-if [ ! -d "$HOME/.cache/ms-playwright/chromium"* ] 2>/dev/null; then
+case "$PLATFORM" in
+    "Darwin")
+        PLAYWRIGHT_BROWSERS_PATH="$HOME/Library/Caches/ms-playwright" ;;
+    "Linux")
+        PLAYWRIGHT_BROWSERS_PATH="$HOME/.cache/ms-playwright" ;;
+    *)
+        PLAYWRIGHT_BROWSERS_PATH="" ;;
+esac
+
+if [ ! -d "$PLAYWRIGHT_BROWSERS_PATH" ] 2>/dev/null ; then
     echo "Installing Playwright browsers..."
     if uv run playwright install ; then
         echo -e "${GREEN}✓ Playwright browsers installed${NC}"
@@ -172,13 +189,15 @@ export HEADLESS
 PYTEST_CMD="uv run pytest ${TEST_PATTERN} -m ui ${VERBOSE}"
 
 # Adjust number of threads for pytest for UI tests
-if [ "$(uname)" == "Darwin" ]; then
-    NPROC_ADJUSTED=$(sysctl -n hw.physicalcpu) # macOS physical cores           
-elif [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]; then
-    NPROC_ADJUSTED=$(($(nproc)/2)) # Linux half of total cores
-else 
-    NPROC_ADJUSTED="1" # Other OS fallback
-fi    
+case "$PLATFORM" in
+    "Darwin")
+        NPROC_ADJUSTED=$(sysctl -n hw.physicalcpu) ;; # macOS physical cores
+    "Linux")
+        NPROC_ADJUSTED=$(($(nproc)/2)) ;; # Linux half of total cores
+    *)
+        NPROC_ADJUSTED="1" ;; # Other OS fallback
+esac
+
 export PYTEST_ADDOPTS="-n$NPROC_ADJUSTED"
 
 if [ "$ALLURE_REPORT" = true ]; then

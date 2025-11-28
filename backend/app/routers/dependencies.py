@@ -1,9 +1,10 @@
-from app.database import get_db
-from app.models import User
-from app.services import AuthService, TaskService, UserService
 from fastapi import Depends
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
+
+from app.database import get_db
+from app.models import User
+from app.services import AuthService, TaskService, UserService
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/auth/login")
 

@@ -1,12 +1,13 @@
 from contextlib import asynccontextmanager
 
-from app.core.config import settings
-from app.database import SessionLocal
-from app.routers import auth, task, user
 from fastapi import FastAPI, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from sqlalchemy import text
+
+from app.core.config import settings
+from app.database import SessionLocal
+from app.routers import auth, task, user
 
 
 @asynccontextmanager

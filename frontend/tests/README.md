@@ -2,15 +2,6 @@
 
 This directory contains comprehensive unit tests for the Flask frontend.
 
-## Test Structure
-
-```
-tests/
-├── __init__.py
-├── conftest.py          # Pytest fixtures and configuration
-└── test_routes.py       # Route and view tests
-```
-
 ## Running Tests
 
 ### Install Test Dependencies
@@ -56,8 +47,7 @@ uv run pytest -s
 After running tests with coverage, open the HTML report:
 
 ```bash
-open htmlcov/index.html  # macOS
-xdg-open htmlcov/index.html  # Linux
+htmlcov/index.html
 ```
 
 ## Test Categories
@@ -180,12 +170,4 @@ def test_redirect(self, client):
 def test_flash_message(self, client):
     response = client.post('/action')
     assert b'Success message' in response.data
-```
-
-## Running Tests in Docker
-
-To run tests inside the Docker container:
-
-```bash
-docker exec qa-lab-frontend-1 uv run pytest
 ```

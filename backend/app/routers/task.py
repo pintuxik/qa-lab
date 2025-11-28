@@ -2,12 +2,13 @@
 
 from typing import List
 
+from fastapi import APIRouter, Depends
+
 from app.models import User
 from app.routers.dependencies import get_current_user, get_task_service
 from app.schemas import Task as TaskSchema
 from app.schemas import TaskCreate, TaskUpdate
 from app.services import TaskService
-from fastapi import APIRouter, Depends
 
 router = APIRouter()
 

@@ -1,10 +1,11 @@
 from typing import List
 
+from fastapi import HTTPException
+from sqlalchemy.orm import Session
+
 from app.models import Task
 from app.repositories import TaskRepository
 from app.schemas import TaskCreate, TaskUpdate
-from fastapi import HTTPException
-from sqlalchemy.orm import Session
 
 
 class TaskService:

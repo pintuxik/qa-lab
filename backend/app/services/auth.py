@@ -1,14 +1,15 @@
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
+from fastapi import HTTPException, status
+from jose import JWTError, jwt
+from sqlalchemy.orm import Session
+
 from app.core.config import settings
 from app.core.security import verify_password
 from app.models import User
 from app.repositories import UserRepository
 from app.schemas import TokenData
-from fastapi import HTTPException, status
-from jose import JWTError, jwt
-from sqlalchemy.orm import Session
 
 
 class AuthService:

@@ -1,47 +1,88 @@
-# QA Lab - Task Management System
+# QA Lab 
 
-[![Tests](https://img.shields.io/badge/tests-119%20passing-brightgreen)](https://github.com/pintuxik/qa-lab)
-[![Coverage](https://img.shields.io/badge/coverage-88%25-green)](https://github.com/pintuxik/qa-lab)
+[![Tests](https://img.shields.io/badge/tests-273%20passing-brightgreen)](https://github.com/pintuxik/qa-lab)
+[![Coverage](https://img.shields.io/badge/coverage-80%25-green)](https://github.com/pintuxik/qa-lab)
 [![Python](https://img.shields.io/badge/python-3.14-blue)](https://www.python.org/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.120-009688)](https://fastapi.tiangolo.com/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-A production-ready full-stack task management application built with FastAPI (backend) and Flask (frontend), featuring comprehensive automated testing, Docker deployment, and modern development practices. This project demonstrates AI-assisted development and serves as a complete QA testing environment.
+**⭐ If you find this project helpful, please consider giving it a star!**
 
-**🎯 Key Highlights:**
-- 119 automated tests with 88% code coverage
-- Complete CI/CD automation scripts
-- Docker-ready production deployment
-- RESTful API with OpenAPI documentation
-- Modern responsive UI with Bootstrap 5
+## 🙏 Acknowledgments
+This application is my playground for learning full-stack development, testing practices, containerization, DB Migration and many more. Some features like UI, units, parts of automation and tests were originally built by AI agents. Backend is mostly rewritten by me with occasional assistance of Claude Code. Lots of things still lack polishing and even have rough edges. This is my way to learn: start building and grow knowledge. 
+
+WHAT'S NEXT: Kubernetes cluster including minikube in local, CI/CD pipelines in Github Actions, Quality gates, Test and Prod environments, deployments into private cloud. 
+
+## Description
+A production-ready full-stack task management application built with FastAPI (backend) and Flask (frontend), featuring comprehensive automated testing, Docker deployment, and modern development practices.
 
 ## 📋 Table of Contents
 
-- [Architecture](#️-architecture)
-- [Project Structure](#-project-structure)
-- [Features](#-features)
 - [Quick Start](#-quick-start)
-- [Development](#️-development)
-- [Comprehensive Testing](#-comprehensive-testing-suite)
-- [API Endpoints](#-api-endpoints)
+- [Architecture](#-architecture)
+- [Project Structure](#-project-structure)
 - [Configuration](#-configuration)
+- [Development](#-development)
+- [Testing](#testing)
 - [Docker Commands](#-docker-commands)
-- [Database Schema](#️-database-schema)
-- [Security Features](#-security-features)
-- [Troubleshooting](#-troubleshooting)
 - [Future Enhancements](#-future-enhancements)
+- [Troubleshooting](#-troubleshooting)
 - [Contributing](#-contributing)
 - [License](#-license)
 
+## 🚀 Quick Start
+
+### Prerequisites
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+- [uv](https://docs.astral.sh/uv/getting-started/installation/) (optional for local development) 
+
+### Running the Application
+
+1. **Clone the repo and navigate to QA Lab directory:**
+   ```bash
+   git clone https://github.com/pintuxik/qa-lab.git
+   cd qa-lab
+   ```
+
+2. **Start all services:**
+   ```bash
+   # Production-like mode (recommended for testing)
+   docker-compose up --build
+   
+   # OR Development mode with hot reload
+   docker-compose -f docker-compose.dev.yml up --build
+   ```
+
+3. **Wait for services to start** (first run may take a few minutes)
+
+4. **Run tests:**
+    ```bash
+   # Run all tests (unit + API + UI)
+   chmod +x run_all_tests.sh
+   ./run_all_tests.sh
+   ```
+
+5. **Access the application:**
+   - **Frontend**: http://localhost:5001
+   - **Backend API**: http://localhost:8000
+   - **API Documentation**: http://localhost:8000/docs
+   - **Database**: localhost:5432 (postgres/password)
+
+### First Time Setup
+
+1. Register a new account or use the admin account (admin/admin123)
+2. Login to access the dashboard
+3. Create your first task using the "Add Task" button
+4. Explore the API documentation at http://localhost:8000/docs
+
+
 ## 🏗️ Architecture
 
-- **Backend**: FastAPI with SQLAlchemy ORM
+- **Backend**: FastAPI with SQLAlchemy ORM, Pydantic
 - **Frontend**: Flask with Jinja2 templates and Bootstrap
-- **Database**: PostgreSQL with automatic migrations
+- **Database**: PostgreSQL with automatic migrations with alembic
 - **Authentication**: JWT tokens with secure password hashing
 - **Containerization**: Docker & Docker Compose
-- **UI**: Responsive Bootstrap 5 interface
-- **Package Manager**: uv (ultra-fast Python package manager)
+- **Package Manager**: uv (ultra-fast package manager written in Rust)
 
 ## 📁 Project Structure
 
@@ -56,189 +97,19 @@ qa-lab/
 │   │   ├── main.py              # FastAPI app entry point
 │   │   ├── database.py          # Database connection
 │   │   └── init_db.py           # Database initialization
-│   ├── tests/                   # Backend unit tests (45 tests)
-│   │   ├── test_auth.py
-│   │   ├── test_tasks.py
-│   │   └── test_security.py
-│   ├── pyproject.toml           # Dependencies & config
-│   ├── Dockerfile
-│   └── start.sh
+│   │── tests/                   # Backend unit tests (45 tests)
 ├── frontend/                     # Flask frontend
 │   ├── app/
 │   │   ├── templates/           # Jinja2 HTML templates
 │   │   ├── routes.py            # Flask routes
 │   │   └── __init__.py
-│   ├── tests/                   # Frontend unit tests (21 tests)
-│   │   └── test_routes.py
-│   ├── pyproject.toml
-│   └── Dockerfile
+│   │── tests/                   # Frontend unit tests
 ├── tests/                        # Integration tests
-│   ├── api/                     # API integration tests (34 tests)
-│   │   ├── test_auth_api.py
-│   │   ├── test_tasks_api.py
-│   │   ├── conftest.py
-│   │   └── README.md
-│   └── ui/                      # UI integration tests (19 tests)
-│       ├── test_auth_ui.py
-│       ├── test_tasks_ui.py
-│       ├── conftest.py
-│       └── README.md
-├── utils/                        # Shared utilities
-│   └── utils.py
+│   ├── api/                     # API integration tests 
+│   └── ui/                      # UI integration tests
 ├── docker-compose.yml            # Production-like setup (no volumes)
-├── docker-compose.dev.yml        # Development setup (with volumes)
-
-├── run_all_tests.sh             # Run all 119 tests
-├── run_api_tests.sh             # Run API integration tests
-├── run_ui_tests.sh              # Run UI integration tests
-├── setup_backend_for_tests.sh   # Automated backend setup
-├── stop_backend.sh              # Stop backend services
-├── TESTING.md                   # Comprehensive testing guide
-└── README.md
+└── docker-compose.dev.yml        # Development setup (with volumes)
 ```
-
-## ✨ Features
-
-- **User Management**: Registration, login, and authentication
-- **Task CRUD**: Create, read, update, and delete tasks
-- **Task Properties**: Title, description, priority, category, completion status
-- **Dashboard**: Statistics and task overview
-- **Responsive UI**: Modern Bootstrap interface
-- **RESTful API**: Complete API with automatic documentation
-- **Database**: PostgreSQL with proper relationships
-- **Security**: JWT authentication and password hashing
-
-## 🚀 Quick Start
-
-### Prerequisites
-- Docker and Docker Compose installed
-- uv package manager (optional for local development)
-- Git (optional, for cloning)
-
-### Running the Application
-
-1. **Navigate to the QA Lab directory:**
-   ```bash
-   cd qa-lab
-   ```
-
-2. **Start all services:**
-   ```bash
-   # Production-like mode (recommended for testing)
-   docker-compose up --build
-   
-   # OR Development mode with hot reload
-   docker-compose -f docker-compose.dev.yml up --build
-   ```
-   
-   **Note**: Use the default `docker-compose.yml` for running tests to avoid container reload issues. Use `docker-compose.dev.yml` when actively developing and you want code changes to reflect immediately.
-
-3. **Wait for services to start** (first run may take a few minutes)
-
-4. **Run tests:** (UI tests are executed in headed mode with slow motion enabled for demonstration purposes.)
-    ```bash
-   # Run all tests (unit + API + UI)
-   chmod +x run_all_tests.sh
-   ./run_all_tests.sh
-   ```
-
-5. **Access the application:**
-   - **Frontend**: http://localhost:5001
-   - **Backend API**: http://localhost:8000
-   - **API Documentation**: http://localhost:8000/docs
-   - **Database**: localhost:5432 (postgres/password)
-
-6. **Default admin user:**
-   - **Username**: admin
-   - **Password**: admin123
-   - **Email**: admin@example.com
-
-### First Time Setup
-
-1. Register a new account or use the admin account
-2. Login to access the dashboard
-3. Create your first task using the "Add Task" button
-4. Explore the API documentation at http://localhost:8000/docs
-
-## 🛠️ Development
-
-### Backend Development (FastAPI)
-```bash
-cd qa-lab/backend
-uv sync
-uv run granian --interface asgi app.main:app --host 0.0.0.0 --port 8000
-```
-
-### Frontend Development (Flask)
-```bash
-cd qa-lab/frontend
-uv sync
-uv run granian --interface wsgi app.main:app --backpressure $(nproc) --host 0.0.0.0 --port 5001
-```
-
-### Database Management
-The database is automatically initialized with:
-- Required tables (users, tasks)
-- Default admin user
-- Proper relationships and constraints
-
-## 🧪 Comprehensive Testing Suite
-
-This project includes **119 automated tests** with **88% code coverage**, demonstrating professional testing practices.
-
-### Test Coverage
-
-| Test Type | Count | Coverage | Framework | Execution |
-|-----------|-------|----------|-----------|-----------|
-| Backend Unit Tests | 45 | 85% | pytest | **Parallel 8-worker (~5s)** |
-| Frontend Unit Tests | 21 | 91% | pytest | **Parallel 8-worker (~2s)** |
-| API Integration Tests | 34 | - | pytest + requests | **Parallel 8-worker (~3s)** |
-| UI Integration Tests | 19 | - | Playwright | **Parallel 4-worker (~10s)** |
-| **Total** | **119** | **88%** | - | **~20s total** |
-
-### Running Tests
-
-```bash
-# Run all tests (unit + integration)
-./run_all_tests.sh
-
-# Run specific test suites
-./run_api_tests.sh              # API integration tests 
-./run_ui_tests.sh               # UI tests with Playwright 
-cd backend && uv run pytest     # Backend unit tests
-cd frontend && uv run pytest    # Frontend unit tests
-```
-
-**Performance Note**: Unit tests and Integration tests API run with **number of CPU threads -worker parallelization** by default for faster execution. UI tests run with **number of CPU threads/2 -worker parallelization** due to their slower nature.
-
-### Test Features
-- ✅ Automated test execution scripts
-- ✅ Allure reporting integration
-- ✅ Screenshot capture on UI test failures
-- ✅ Code coverage reports (HTML format)
-- ✅ CI/CD ready configuration
-- ✅ Comprehensive test documentation
-- ✅ **number of CPU threads-worker parallel execution** for all tests
-- ✅ 100% test isolation with UUID-based identifiers
-
-See [TESTING.md](TESTING.md) for detailed testing documentation.
-
-## 📡 API Endpoints
-
-### Authentication
-- `POST /api/auth/register` - User registration
-- `POST /api/auth/login` - User login
-
-### Tasks
-- `GET /api/tasks` - Get user's tasks
-- `POST /api/tasks` - Create new task
-- `GET /api/tasks/{id}` - Get specific task
-- `PUT /api/tasks/{id}` - Update task
-- `DELETE /api/tasks/{id}` - Delete task
-
-### System
-- `GET /` - API status
-- `GET /health` - Health check
 
 ## 🔧 Configuration
 
@@ -246,19 +117,16 @@ See [TESTING.md](TESTING.md) for detailed testing documentation.
 
 The project uses `.env` files for configuration. Example templates are provided:
 
-- [.env.example](.env.example) - Root configuration (integration tests)
+- [tests/.env.example](tests/.env.example) - Integration configuration
 - [backend/.env.example](backend/.env.example) - Backend configuration
 - [frontend/.env.example](frontend/.env.example) - Frontend configuration
 
 **Quick Setup:**
 ```bash
 # Copy example files
-cp .env.example .env
+cp tests/.env.example tests/.env
 cp backend/.env.example backend/.env
 cp frontend/.env.example frontend/.env
-
-# Generate secure secret keys
-python3 -c "import secrets; print(secrets.token_urlsafe(32))"
 ```
 
 **Key Variables:**
@@ -278,12 +146,74 @@ API_BASE_URL=http://backend:8000
 SECRET_KEY=<your-generated-secret-key>
 ```
 
-**Root (.env)** - For integration tests
+**Tests (.env)**
 ```
 API_BASE_URL=http://localhost:8000
 FRONTEND_URL=http://localhost:5001
 HEADLESS=true
 ```
+
+## 🛠️ Development
+
+### install git hooks
+
+```bash
+uv sync
+pre-commit install
+```
+
+### Start Backend
+```bash
+cd qa-lab/backend
+uv sync --group test
+uv run granian --interface asgi app.main:app --host 0.0.0.0 --port 8000
+```
+
+### Start Frontend
+```bash
+cd qa-lab/frontend
+uv sync --group test
+uv run granian --interface wsgi app.main:app --host 0.0.0.0 --port 5001
+```
+
+## 🔬Testing
+
+### Running Tests
+```bash
+# Run all tests (unit + integration)
+cd tests
+./run_all_tests.sh
+
+# Run specific test suites
+cd tests
+./run_api_tests.sh              # API integration tests 
+./run_ui_tests.sh               # UI tests with Playwright 
+cd backend && uv run pytest     # Backend unit tests
+cd frontend && uv run pytest    # Frontend unit tests
+```
+
+### Test Coverage
+
+| Test Type | Count   | Coverage | Framework           | Execution                     |
+|-----------|---------|----------|---------------------|-------------------------------|
+| Backend Unit Tests | 199     | 79%      | pytest              | **Parallel -n auto (~10s)**   |
+| Frontend Unit Tests | 21      | 86%      | pytest              | **Parallel -n auto (~3s)**    |
+| API Integration Tests | 34      | -        | pytest + requests   | **Parallel -n auto (~4s)**    |
+| UI Integration Tests | 19      | -        | pytest + Playwright | **Parallel -n auto/2 (~11s)** |
+| **Total** | **273** | **88%**  | -                   | **~32s total**                |
+ Execution time measured on Macbook Pro 16 2019 A2141
+
+### Test Features
+-  Automated test execution scripts
+-  Allure reporting integration
+-  Screenshot capture on UI test failures
+-  Code coverage reports (HTML format)
+-  CI/CD ready configuration
+-  Comprehensive test documentation
+-  Parallel execution for all tests including UI
+-  100% test isolation with UUID-based identifiers
+
+See [tests/README.md](tests/README.md) for detailed testing documentation.
 
 ## 🐳 Docker Commands
 
@@ -311,46 +241,7 @@ docker-compose logs -f
 
 # Access database
 docker-compose exec db psql -U postgres -d taskmanager
-```
 
-### Docker Compose Files
-
-- **`docker-compose.yml`** - Production-like setup without volume mounts. Use this for running tests to avoid container reload issues.
-- **`docker-compose.dev.yml`** - Development setup with volume mounts for hot code reloading. Use this when actively developing.
-- **`docker-compose.prod.yml`** - Same as default, provided for clarity.
-
-
-## 🔒 Security Features
-
-- JWT token-based authentication
-- Password hashing with bcrypt
-- CORS protection
-- SQL injection prevention
-- Input validation with Pydantic
-- Secure session management
-
-## 📱 UI Features
-
-- Responsive Bootstrap 5 design
-- Task cards with priority indicators
-- Modal forms for task creation
-- Dropdown menus for task actions
-- Statistics dashboard
-- Flash messages for user feedback
-- Font Awesome icons
-
-## 🚨 Troubleshooting
-
-### Common Issues
-
-1. **Port already in use**: Stop other services using ports 5001, 8000, or 5432
-2. **Database connection failed**: Wait for PostgreSQL to fully start
-3. **Frontend can't reach backend**: Check Docker network connectivity
-4. **Permission denied**: Ensure Docker has proper permissions
-5. **Frontend container reloading during tests**: This was caused by volume mounts in docker-compose.yml. The default configuration now uses production-like setup without volume mounts. For development with hot reload, use `docker-compose -f docker-compose.dev.yml up`
-
-### Logs
-```bash
 # View all logs
 docker-compose logs
 
@@ -360,9 +251,14 @@ docker-compose logs frontend
 docker-compose logs db
 ```
 
+### Docker Compose Files
+
+- **`docker-compose.yml`** - Production-like setup without volume mounts. Use this for running tests.
+- **`docker-compose.dev.yml`** - Development setup with volume mounts for hot code reloading. Use this when actively developing.
+
 ## 🚀 Future Enhancements
 
-This is version 1.0 - planned improvements include:
+This is version 0.0.1 - planned improvements include:
 
 ### Testing & Quality
 - [ ] Visual regression testing
@@ -372,14 +268,12 @@ This is version 1.0 - planned improvements include:
 - [ ] Mutation testing
 
 ### Features
-- [ ] Real-time notifications (WebSockets)
 - [ ] File attachments for tasks
 - [ ] Task comments and collaboration
 - [ ] Task templates and recurring tasks
 - [ ] Advanced filtering and search
 
 ### Architecture
-- [ ] GraphQL API option
 - [ ] Microservices architecture exploration
 - [ ] Caching layer (Redis)
 - [ ] Message queue (RabbitMQ/Celery)
@@ -390,7 +284,16 @@ This is version 1.0 - planned improvements include:
 - [ ] Kubernetes deployment
 - [ ] Monitoring and logging (Prometheus/Grafana)
 - [ ] API rate limiting
-- [ ] Database migrations with Alembic
+- [x] Database migrations with Alembic
+
+## 🚨 Troubleshooting
+
+### Common Issues
+
+1. **Port already in use**: Stop other services using ports 5001, 8000, or 5432
+2. **Database connection failed**: Wait for PostgreSQL to fully start
+3. **Frontend can't reach backend**: Check Docker network connectivity
+4. **Permission denied**: Ensure Docker has proper permissions
 
 ## 🤝 Contributing
 
@@ -404,14 +307,4 @@ This is a learning project, but suggestions and feedback are welcome! Feel free 
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🙏 Acknowledgments
-
-- Built with multiple coding assistants
-- Demonstrates AI-assisted development practices
-- Inspired by modern full-stack development patterns
-
 ---
-
-**⭐ If you find this project helpful, please consider giving it a star!**
-
-This application provides a solid foundation for learning full-stack development, testing practices, and AI-assisted coding!

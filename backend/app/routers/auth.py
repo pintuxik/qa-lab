@@ -2,12 +2,13 @@
 
 from datetime import timedelta
 
+from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordRequestForm
+
 from app.core.config import settings
 from app.routers.dependencies import get_auth_service
 from app.schemas import Token
 from app.services import AuthService
-from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordRequestForm
 
 router = APIRouter()
 
