@@ -1,25 +1,24 @@
-from datetime import datetime
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING
 
-from sqlalchemy import DateTime, text
+from sqlalchemy import text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy.sql import func
 
 from app.database import Base
+from app.models.mixin import IdMixin, TimestampMixin
 
 if TYPE_CHECKING:
     from app.models.task import Task
 
 
-class User(Base):
+class User(IdMixin, TimestampMixin, Base):
+    """User model representing application users."""
+
     __tablename__ = "users"
 
-    id: Mapped[int] = mapped_column(primary_key=True, index=True)
-    email: Mapped[str] = mapped_column(unique=True, index=True, nullable=False)
-    username: Mapped[str] = mapped_column(unique=True, index=True, nullable=False)
-    hashed_password: Mapped[str] = mapped_column(nullable=False)
-    is_active: Mapped[bool] = mapped_column(default=True, server_default=text("true"), nullable=False)
-    is_admin: Mapped[bool] = mapped_column(default=False, server_default=text("false"), nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    email: Mapped[str] = mapped_column(unique=True, index=True)
+    username: Mapped[str] = mapped_column(unique=True, index=True)
+    hashed_password: Mapped[str]
+    is_active: Mapped[bool] = mapped_column(default=True, server_default=text("true"))
+    is_admin: Mapped[bool] = mapped_column(default=False, server_default=text("false"))
 
-    tasks: Mapped[List[Task]] = relationship("Task", back_populates="owner", cascade="all, delete-orphan")
+    tasks: Mapped[list["Task"]] = relationship("Task", back_populates="owner", cascade="all, delete-orphan")
