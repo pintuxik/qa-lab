@@ -5,13 +5,14 @@ description = "API and UI integration tests for Task Management system"
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
-    "allure-pytest>=2.15.0",
+    "allure-pytest>=2.15.2",
+    "httpx>=0.28.1",
+    "locust>=2.42.6",
     "playwright>=1.56.0",
-    "pytest>=8.4.2",
+    "pytest>=9.0.1",
     "pytest-asyncio>=1.3.0",
-    "pytest-playwright>=0.7.1",
+    "pytest-playwright>=0.7.2",
     "pytest-xdist>=3.8.0",
-    "requests>=2.32.5",
 ]
 
 [tool.pytest.ini_options]

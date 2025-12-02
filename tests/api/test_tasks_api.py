@@ -4,7 +4,6 @@ Integration tests for Tasks API endpoints.
 
 import allure
 import pytest
-from conftest import TEST_API_KEY
 
 
 @allure.feature("Tasks API")
@@ -439,7 +438,7 @@ class TestTaskIsolation:
                 "email": f"api_user_1_{unique_id}@example.com",
                 "password": "Pass123!",
             }
-            response1 = api_client.post(f"{api_base_url}/api/users/", json=user1_data)
+            _ = api_client.post(f"{api_base_url}/api/users/", json=user1_data)
             login1 = api_client.post(
                 f"{api_base_url}/api/auth/login",
                 data={"username": user1_data["username"], "password": user1_data["password"]},
@@ -459,7 +458,7 @@ class TestTaskIsolation:
                 "email": f"api_user_2_{unique_id}@example.com",
                 "password": "Pass123!",
             }
-            response2 = api_client.post(f"{api_base_url}/api/users/", json=user2_data)
+            _ = api_client.post(f"{api_base_url}/api/users/", json=user2_data)
             login2 = api_client.post(
                 f"{api_base_url}/api/auth/login",
                 data={"username": user2_data["username"], "password": user2_data["password"]},
@@ -473,27 +472,3 @@ class TestTaskIsolation:
 
         with allure.step("Verify user 2 cannot access user 1's task"):
             assert response.status_code == 404
-
-        # Cleanup: Delete test user using secure test-cleanup endpoint
-        if TEST_API_KEY:
-            with allure.step("Cleanup test user via test-cleanup endpoint"):
-                user_ids = [response1.json()["id"], response2.json()["id"]]
-                try:
-                    response = api_client.post(
-                        f"{api_base_url}/api/users/test-cleanup",
-                        json={"user_ids": user_ids},
-                        headers={"X-Test-API-Key": TEST_API_KEY},
-                    )
-                    assert response.status_code == 200, f"Failed to cleanup user: {response.text}"
-                    allure.attach(
-                        f"Deleted users: {response1.json()['username']}, {response2.json()['username']} (ID: {response1.json()['id']}, {response2.json()['id']})",
-                        name="Test User Cleanup",
-                        attachment_type=allure.attachment_type.TEXT,
-                    )
-                except Exception as e:
-                    # Log cleanup failure but don't fail the test
-                    allure.attach(
-                        f"Failed to cleanup users {response1.json()['username']}, {response2.json()['username']}: {str(e)}",
-                        name="Cleanup Warning",
-                        attachment_type=allure.attachment_type.TEXT,
-                    )
