@@ -21,4 +21,6 @@ class User(IdMixin, TimestampMixin, Base):
     is_active: Mapped[bool] = mapped_column(default=True, server_default=text("true"))
     is_admin: Mapped[bool] = mapped_column(default=False, server_default=text("false"))
 
-    tasks: Mapped[list["Task"]] = relationship("Task", back_populates="owner", cascade="all, delete-orphan")
+    tasks: Mapped[list["Task"]] = relationship(
+        "Task", back_populates="owner", cascade="all, delete-orphan", lazy="selectin"
+    )

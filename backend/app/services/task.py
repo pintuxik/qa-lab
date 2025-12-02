@@ -1,7 +1,7 @@
 from typing import List
 
 from fastapi import HTTPException
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import Task
 from app.repositories import TaskRepository
@@ -9,97 +9,41 @@ from app.schemas import TaskCreate, TaskUpdate
 
 
 class TaskService:
-    """Service for task business logic"""
+    """Service for task business logic."""
 
-    def __init__(self, db: Session):
+    def __init__(self, db: AsyncSession):
         self.db = db
         self.task_repo = TaskRepository(db)
 
-    def create_task(self, task_data: TaskCreate, owner_id: int) -> Task:
+    async def create_task(self, task_data: TaskCreate, owner_id: int) -> Task:
         """
-        Create a new task
-
-        Args:
-            task_data: Task creation data
-            owner_id: ID of the task owner
-
-        Returns:
-            Created task
-        """
-        task = self.task_repo.create_task(task_data, owner_id)
-        self.task_repo.commit()
+        Create a new task."""
+        task = await self.task_repo.create_task(task_data, owner_id)
+        await self.task_repo.commit()
         return task
 
-    def get_user_tasks(self, owner_id: int, skip: int = 0, limit: int = 100) -> List[Task]:
+    async def get_user_tasks(self, owner_id: int, skip: int = 0, limit: int = 100) -> List[Task]:
         """
-        Get all tasks for a user
+        Get all tasks for a user with pagination."""
+        return await self.task_repo.get_all_by_owner(owner_id, skip, limit)
 
-        Args:
-            owner_id: ID of the task owner
-            skip: Number of records to skip
-            limit: Maximum number of records to return
-
-        Returns:
-            List of tasks
-        """
-        return self.task_repo.get_all_by_owner(owner_id, skip, limit)
-
-    def get_task(self, task_id: int, owner_id: int) -> Task:
-        """
-        Get a specific task
-
-        Args:
-            task_id: ID of the task
-            owner_id: ID of the task owner
-
-        Returns:
-            Task
-
-        Raises:
-            HTTPException: If task not found
-        """
-        task = self.task_repo.get_by_id_and_owner(task_id, owner_id)
+    async def get_task(self, task_id: int, owner_id: int) -> Task:
+        """Get a specific task with authorization check."""
+        task = await self.task_repo.get_by_id_and_owner(task_id, owner_id)
         if task is None:
             raise HTTPException(status_code=404, detail="Task not found")
         return task
 
-    def update_task(self, task_id: int, task_data: TaskUpdate, owner_id: int) -> Task:
-        """
-        Update a task
-
-        Args:
-            task_id: ID of the task
-            task_data: Task update data
-            owner_id: ID of the task owner
-
-        Returns:
-            Updated task
-
-        Raises:
-            HTTPException: If task not found
-        """
-        task = self.get_task(task_id, owner_id)
-
-        # Get only the fields that were provided
+    async def update_task(self, task_id: int, task_data: TaskUpdate, owner_id: int) -> Task:
+        """Update a task with partial data."""
+        task = await self.get_task(task_id, owner_id)
         update_data = task_data.model_dump(exclude_unset=True)
-
-        # Update the task
-        updated_task = self.task_repo.update_task(task, update_data)
-        self.task_repo.commit()
-
+        updated_task = await self.task_repo.update_task(task, update_data)
+        await self.task_repo.commit()
         return updated_task
 
-    def delete_task(self, task_id: int, owner_id: int) -> None:
-        """
-        Delete a task
-
-        Args:
-            task_id: ID of the task
-            owner_id: ID of the task owner
-
-        Raises:
-            HTTPException: If task not found
-        """
-        task = self.get_task(task_id, owner_id)
-        self.task_repo.delete(task)
-        self.task_repo.commit()
+    async def delete_task(self, task_id: int, owner_id: int) -> None:
+        """Delete a task."""
+        task = await self.get_task(task_id, owner_id)
+        await self.task_repo.delete(task)
+        await self.task_repo.commit()

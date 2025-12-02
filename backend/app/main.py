@@ -60,9 +60,9 @@ async def readiness_check():
     """
     try:
         # Test database connection
-        db = SessionLocal()
-        db.execute(text("SELECT 1"))
-        db.close()
+        async with SessionLocal() as db:
+            await db.execute(text("SELECT 1"))
+
         return JSONResponse(
             status_code=status.HTTP_200_OK,
             content={"status": "ready", "database": "connected", "service": "backend"},

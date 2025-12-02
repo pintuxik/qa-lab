@@ -1,49 +1,54 @@
 from typing import Generic, List, Optional, Type, TypeVar
 
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.ext.declarative import DeclarativeMeta
-from sqlalchemy.orm import Session
 
 ModelType = TypeVar("ModelType", bound=DeclarativeMeta)
 
 
 class BaseRepository(Generic[ModelType]):
-    """Base repository with common CRUD operations"""
+    """Base repository with common async CRUD operations."""
 
-    def __init__(self, model: Type[ModelType], db: Session):
+    def __init__(self, model: Type[ModelType], db: AsyncSession):
         self.model = model
         self.db = db
 
-    def get_by_id(self, id: int) -> Optional[ModelType]:
-        """Get a single record by ID"""
-        return self.db.query(self.model).filter(self.model.id == id).first()
+    async def get_by_id(self, id: int) -> Optional[ModelType]:
+        """Get a single record by its ID."""
+        stmt = select(self.model).where(self.model.id == id)
+        result = await self.db.execute(stmt)
+        return result.scalar_one_or_none()
 
-    def get_all(self, skip: int = 0, limit: int = 100) -> List[ModelType]:
-        """Get all records with pagination"""
-        return self.db.query(self.model).offset(skip).limit(limit).all()
+    async def get_all(self, skip: int = 0, limit: int = 100) -> List[ModelType]:
+        """Get all records with pagination."""
+        stmt = select(self.model).offset(skip).limit(limit)
+        result = await self.db.execute(stmt)
+        return result.scalars().all()
 
-    def create(self, obj: ModelType) -> ModelType:
-        """Create a new record"""
+    async def create(self, obj: ModelType) -> ModelType:
+        """Create a new record in the database."""
         self.db.add(obj)
-        self.db.flush()
-        self.db.refresh(obj)
+        await self.db.flush()
+        await self.db.refresh(obj)
         return obj
 
-    def update(self, obj: ModelType) -> ModelType:
-        """Update an existing record"""
+    async def update(self, obj: ModelType) -> ModelType:
+        """Update an existing record in the database."""
         self.db.add(obj)
-        self.db.flush()
-        self.db.refresh(obj)
+        await self.db.flush()
+        await self.db.refresh(obj)
         return obj
 
-    def delete(self, obj: ModelType) -> None:
-        """Delete a record"""
-        self.db.delete(obj)
-        self.db.flush()
+    async def delete(self, obj: ModelType) -> None:
+        """Delete a record from the database."""
+        await self.db.delete(obj)
+        await self.db.flush()
 
-    def commit(self) -> None:
-        """Commit the transaction"""
-        self.db.commit()
+    async def commit(self) -> None:
+        """Commit the current transaction."""
+        await self.db.commit()
 
-    def rollback(self) -> None:
-        """Rollback the transaction"""
-        self.db.rollback()
+    async def rollback(self) -> None:
+        """Rollback the current transaction."""
+        await self.db.rollback()

@@ -23,6 +23,6 @@ class Task(IdMixin, TimestampMixin, Base):
     )
     category: Mapped[str | None]
     owner_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
-    owner: Mapped["User"] = relationship("User", back_populates="tasks")
+    owner: Mapped["User"] = relationship("User", back_populates="tasks", lazy="selectin")
 
     __table_args__ = (CheckConstraint("priority IN ('low', 'medium', 'high')", name="task_priority_check"),)

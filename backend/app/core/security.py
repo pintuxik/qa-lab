@@ -8,15 +8,20 @@ Note: Authentication logic (user authentication, token generation, current user 
 has been moved to AuthService in app/services/auth.py
 """
 
+import asyncio
+
 import bcrypt
 from fastapi.security import OAuth2PasswordBearer
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/auth/login")
 
 
-def verify_password(plain_password: str, hashed_password: str) -> bool:
+async def verify_password(plain_password: str, hashed_password: str) -> bool:
     """
     Verify a plain password against a hashed password.
+
+    Runs bcrypt.checkpw in a thread pool to avoid blocking the event loop.
+    bcrypt is CPU-intensive (~100-200ms per call) and must not block async operations.
 
     Args:
         plain_password: The plain text password to verify
@@ -25,12 +30,19 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     Returns:
         True if password matches, False otherwise
     """
-    return bcrypt.checkpw(plain_password.encode("utf-8"), hashed_password.encode("utf-8"))
+
+    def _verify():
+        return bcrypt.checkpw(plain_password.encode("utf-8"), hashed_password.encode("utf-8"))
+
+    return await asyncio.to_thread(_verify)
 
 
-def get_password_hash(password: str) -> str:
+async def get_password_hash(password: str) -> str:
     """
     Hash a password using bcrypt.
+
+    Runs bcrypt.hashpw in a thread pool to avoid blocking the event loop.
+    bcrypt is CPU-intensive (~100-200ms per call) and must not block async operations.
 
     Args:
         password: The plain text password to hash
@@ -38,4 +50,8 @@ def get_password_hash(password: str) -> str:
     Returns:
         The bcrypt hashed password as a string
     """
-    return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+
+    def _hash():
+        return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+
+    return await asyncio.to_thread(_hash)
