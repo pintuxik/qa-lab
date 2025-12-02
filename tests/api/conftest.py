@@ -5,8 +5,8 @@ Global pytest configuration for API integration testing with Allure.
 import os
 
 import allure
+import httpx
 import pytest
-import requests
 
 # API Configuration
 API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000")
@@ -35,29 +35,51 @@ def api_base_url():
     return API_BASE_URL
 
 
+def pytest_sessionfinish(session, exitstatus):
+    """
+    Hook called after all tests complete (including all xdist workers).
+
+    This ensures cleanup happens only once after all parallel workers finish,
+    avoiding race conditions where cleanup deletes users while tests are running.
+    """
+    # Skip cleanup if running in xdist worker process
+    # Only the master process (or non-xdist runs) should do cleanup
+    if hasattr(session.config, "workerinput"):
+        return
+
+    # Cleanup: Delete test users using secure test-cleanup endpoint
+    if TEST_API_KEY:
+        try:
+            api_base_url = os.getenv("API_BASE_URL", "http://localhost:8000")
+            with httpx.Client() as api_client:
+                response = api_client.post(
+                    f"{api_base_url}/api/users/test-cleanup",
+                    json={"username_patterns": ["api_user_*"]},
+                    headers={"X-Test-API-Key": TEST_API_KEY},
+                )
+                if response.status_code != 200:
+                    print(f"Warning: Failed to cleanup users: {response.text}")
+        except Exception as e:
+            # Log cleanup failure but don't fail the test run
+            print(f"Warning: Failed to cleanup users by pattern 'api_user_*': {str(e)}")
+
+
 @pytest.fixture(scope="function")
 def api_client(api_base_url):
-    """Provide a requests session for API calls with global timeout.
+    """Provide an httpx client for API calls with global timeout.
+
+    Uses httpx.Client (sync) for consistency with async backend.
+    Benefits over requests:
+    - Better HTTP/2 support
+    - More modern API
+    - Consistent with httpx.AsyncClient if we go async later
 
     Default timeout of 10 seconds per repo standards.
     Can be overridden per request by passing timeout parameter.
     """
-    session = requests.Session()
-    # Don't set default Content-Type - let requests handle it based on data type
-
-    # Monkey-patch request methods to apply default timeout (10 seconds)
-    original_request = session.request
-
-    def request_with_timeout(method, url, **kwargs):
-        # Only set timeout if not already specified
-        if "timeout" not in kwargs:
-            kwargs["timeout"] = 10  # 10 seconds
-        return original_request(method, url, **kwargs)
-
-    session.request = request_with_timeout
-
-    yield session
-    session.close()
+    # httpx.Client with default timeout
+    with httpx.Client(timeout=10.0) as client:
+        yield client
 
 
 @pytest.fixture(scope="function")
@@ -90,31 +112,7 @@ def registered_user(api_client, api_base_url, test_user_credentials):
             attachment_type=allure.attachment_type.JSON,
         )
 
-    user_info = {**test_user_credentials, "id": user_data["id"]}
-    yield user_info
-
-    # Cleanup: Delete test user using secure test-cleanup endpoint
-    if TEST_API_KEY:
-        with allure.step("Cleanup test user via test-cleanup endpoint"):
-            try:
-                response = api_client.post(
-                    f"{api_base_url}/api/users/test-cleanup",
-                    json={"user_ids": [user_info["id"]]},
-                    headers={"X-Test-API-Key": TEST_API_KEY},
-                )
-                assert response.status_code == 200, f"Failed to cleanup user: {response.text}"
-                allure.attach(
-                    f"Deleted user: {user_info['username']} (ID: {user_info['id']})",
-                    name="Test User Cleanup",
-                    attachment_type=allure.attachment_type.TEXT,
-                )
-            except Exception as e:
-                # Log cleanup failure but don't fail the test
-                allure.attach(
-                    f"Failed to cleanup user {user_info['username']}: {str(e)}",
-                    name="Cleanup Warning",
-                    attachment_type=allure.attachment_type.TEXT,
-                )
+    yield {**test_user_credentials, "id": user_data["id"]}
 
 
 @pytest.fixture(scope="function")

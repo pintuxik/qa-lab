@@ -7,7 +7,6 @@ import time
 
 import allure
 import pytest
-from conftest import TEST_API_KEY
 from playwright.sync_api import Page, expect
 
 # Frontend URL
@@ -47,15 +46,6 @@ class TestUserRegistration:
             # Check for success flash message
             success_message = page.locator(".alert-success")
             expect(success_message).to_be_visible()
-
-        with allure.step("Cleanup test user"):
-            if TEST_API_KEY:
-                response = api_client.post(
-                    f"{api_base_url}/api/users/test-cleanup",
-                    json={"username_patterns": [unique_id]},
-                    headers={"X-Test-API-Key": TEST_API_KEY},
-                )
-                assert response.status_code == 200, f"Failed to cleanup user: {response.text}"
 
     @allure.severity(allure.severity_level.NORMAL)
     @allure.title("Registration form validation")
