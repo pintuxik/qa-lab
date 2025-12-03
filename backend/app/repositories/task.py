@@ -1,6 +1,6 @@
 from typing import List, Optional
 
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import Task
@@ -36,3 +36,15 @@ class TaskRepository(BaseRepository[Task]):
         for field, value in update_data.items():
             setattr(task, field, value)
         return await self.update(task)
+
+    async def delete_by_id_and_owner(self, task_id: int, owner_id: int) -> bool:
+        """Delete task with single query. Returns True if deleted, False if not found.
+
+        This optimized method performs DELETE with WHERE clause in a single database
+        round-trip instead of fetch-then-delete pattern, significantly reducing latency
+        and connection pool contention under high concurrency.
+        """
+        stmt = delete(Task).where(Task.id == task_id, Task.owner_id == owner_id)
+        result = await self.db.execute(stmt)
+        await self.db.flush()
+        return result.rowcount > 0

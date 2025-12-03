@@ -7,6 +7,7 @@ from app.models.task import Task
 from app.models.user import User
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import selectinload
 
 
 class TestUserModel:
@@ -92,18 +93,33 @@ class TestUserModel:
         user = User(email="test@example.com", username="testuser", hashed_password="hashed_pw")
         db_session.add(user)
         await db_session.commit()
-        await db_session.refresh(user)
+
+        # Save user ID before querying
+        user_id = user.id
+
+        # Query with explicit relationship loading
+        stmt = select(User).where(User.id == user_id).options(selectinload(User.tasks))
+        result = await db_session.execute(stmt)
+        user = result.scalar_one()
 
         # Initially, user should have no tasks
         assert user.tasks == []
 
         # Add a task
-        task = Task(title="Test Task", owner_id=user.id)
+        task = Task(title="Test Task", owner_id=user_id)
         db_session.add(task)
         await db_session.commit()
 
-        # Refresh user to get updated tasks
-        await db_session.refresh(user)
+        # Query again with explicit relationship loading and populate_existing to force reload
+        stmt = (
+            select(User)
+            .where(User.id == user_id)
+            .options(selectinload(User.tasks))
+            .execution_options(populate_existing=True)
+        )
+        result = await db_session.execute(stmt)
+        user = result.scalar_one()
+
         assert len(user.tasks) == 1
         assert user.tasks[0].title == "Test Task"
 
@@ -204,6 +220,11 @@ class TestTaskModel:
 
         task_ids = [task1.id, task2.id]
 
+        # Load user with tasks relationship for cascade to work properly
+        stmt = select(User).where(User.id == user.id).options(selectinload(User.tasks))
+        result = await db_session.execute(stmt)
+        user = result.scalar_one()
+
         # Delete user
         await db_session.delete(user)
         await db_session.commit()
@@ -280,6 +301,11 @@ class TestTaskModel:
         task = Task(title="Relationship test", owner_id=test_user.id)
         db_session.add(task)
         await db_session.commit()
+
+        # Query with explicit relationship loading
+        stmt = select(Task).where(Task.id == task.id).options(selectinload(Task.owner))
+        result = await db_session.execute(stmt)
+        task = result.scalar_one()
 
         assert task.owner is not None
         assert task.owner.id == test_user.id

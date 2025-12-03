@@ -43,7 +43,8 @@ class TaskService:
         return updated_task
 
     async def delete_task(self, task_id: int, owner_id: int) -> None:
-        """Delete a task."""
-        task = await self.get_task(task_id, owner_id)
-        await self.task_repo.delete(task)
+        """Delete a task with optimized single-query pattern."""
+        deleted = await self.task_repo.delete_by_id_and_owner(task_id, owner_id)
+        if not deleted:
+            raise HTTPException(status_code=404, detail="Task not found")
         await self.task_repo.commit()

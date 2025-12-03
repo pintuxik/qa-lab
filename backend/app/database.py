@@ -12,10 +12,10 @@ from app.core.config import settings
 # pool_pre_ping: Test connections before using them (slight overhead, but prevents errors)
 engine = create_async_engine(
     settings.DATABASE_URL,
-    pool_size=5,  # Keep 10 connections warm
-    max_overflow=10,  # Allow up to 30 total connections
+    pool_size=20,  # Increased from 5 for 200 concurrent users
+    max_overflow=30,  # Increased from 10 (50 total connections max)
     pool_recycle=3600,  # Recycle connections after 1 hour
-    pool_pre_ping=True,  # Disable pre-ping for speed (asyncpg handles reconnection)
+    pool_pre_ping=False,  # Disabled for performance (asyncpg handles reconnection)
 )
 SessionLocal = async_sessionmaker(expire_on_commit=False, autocommit=False, autoflush=False, bind=engine)
 
