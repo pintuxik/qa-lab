@@ -187,13 +187,13 @@ class TestHelpers:
         assert "hashed_password" not in user_data, "User response should not contain hashed_password"
 
     @staticmethod
-    def create_and_login_user(client, db_session, username: str, email: str, password: str) -> dict:
+    async def create_and_login_user(client, db_session, username: str, email: str, password: str) -> dict:
         """
         Create a new user in database, login, and return auth headers.
 
         Args:
-            client: FastAPI test client
-            db_session: Database session
+            client: AsyncClient test client
+            db_session: Async database session
             username: Username for new user
             email: Email for new user
             password: Password for new user (will be hashed)
@@ -207,19 +207,19 @@ class TestHelpers:
         user = User(
             username=username,
             email=email,
-            hashed_password=get_password_hash(password),
+            hashed_password=await get_password_hash(password),
             is_active=True,
         )
         db_session.add(user)
-        db_session.commit()
+        await db_session.commit()
 
         # Login to get token
-        response = client.post(Endpoints.AUTH_LOGIN, data={"username": username, "password": password})
+        response = await client.post(Endpoints.AUTH_LOGIN, data={"username": username, "password": password})
         token = response.json()["access_token"]
         return {"Authorization": f"Bearer {token}"}
 
     @staticmethod
-    def create_test_user(
+    async def create_test_user(
         db_session,
         username: str = "testuser",
         email: str = "test@example.com",
@@ -231,7 +231,7 @@ class TestHelpers:
         Create a test user in the database.
 
         Args:
-            db_session: Database session
+            db_session: Async database session
             username: Username (default: "testuser")
             email: Email (default: "test@example.com")
             password: Plain password to be hashed (default: "TestPass123!")
@@ -247,22 +247,22 @@ class TestHelpers:
         user = User(
             username=username,
             email=email,
-            hashed_password=get_password_hash(password),
+            hashed_password=await get_password_hash(password),
             is_active=is_active,
             is_admin=is_admin,
         )
         db_session.add(user)
-        db_session.commit()
-        db_session.refresh(user)
+        await db_session.commit()
+        await db_session.refresh(user)
         return user
 
     @staticmethod
-    def create_test_task(db_session, owner_id: int, title: str = "Test Task", **kwargs):
+    async def create_test_task(db_session, owner_id: int, title: str = "Test Task", **kwargs):
         """
         Create a test task in the database.
 
         Args:
-            db_session: Database session
+            db_session: Async database session
             owner_id: ID of the task owner
             title: Task title (default: "Test Task")
             **kwargs: Additional task fields (description, priority, category, is_completed)
@@ -274,8 +274,8 @@ class TestHelpers:
 
         task = Task(title=title, owner_id=owner_id, **kwargs)
         db_session.add(task)
-        db_session.commit()
-        db_session.refresh(task)
+        await db_session.commit()
+        await db_session.refresh(task)
         return task
 
     @staticmethod

@@ -6,22 +6,27 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 
 from app.core.config import settings
-from app.routers.dependencies import get_auth_service
+from app.routers.dependencies import AuthServiceDep
 from app.schemas import Token
-from app.services import AuthService
 
 router = APIRouter()
 
 
 @router.post("/login", response_model=Token)
-def login(form_data: OAuth2PasswordRequestForm = Depends(), auth_service: AuthService = Depends(get_auth_service)):
+async def login(
+    auth_service: AuthServiceDep,
+    form_data: OAuth2PasswordRequestForm = Depends(),
+):
     """
     Authenticate user and return access token.
 
-    Uses OAuth2 password flow (username + password).
-    Returns JWT token for subsequent authenticated requests.
+    OAuth2 password flow
+    - Uses OAuth2PasswordRequestForm from FastAPI
+    - Expects username and password in form data
+    - Returns JWT token on success
+    - Follows OAuth2 spec for password grant type
     """
-    user = auth_service.authenticate_user(form_data.username, form_data.password)
+    user = await auth_service.authenticate_user(form_data.username, form_data.password)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

@@ -3,7 +3,7 @@ from typing import Optional
 
 from fastapi import HTTPException, status
 from jose import JWTError, jwt
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.core.security import verify_password
@@ -13,41 +13,26 @@ from app.schemas import TokenData
 
 
 class AuthService:
-    """Service for authentication business logic"""
+    """Service for authentication business logic."""
 
-    def __init__(self, db: Session):
+    def __init__(self, db: AsyncSession):
         self.db = db
         self.user_repo = UserRepository(db)
 
-    def authenticate_user(self, username: str, password: str) -> Optional[User]:
-        """
-        Authenticate a user with username and password
+    async def authenticate_user(self, username: str, password: str) -> Optional[User]:
+        """Authenticate a user with username and password."""
+        user = await self.user_repo.get_by_username(username)
 
-        Args:
-            username: Username
-            password: Plain text password
-
-        Returns:
-            User if authentication successful, None otherwise
-        """
-        user = self.user_repo.get_by_username(username)
         if not user:
             return None
-        if not verify_password(password, user.hashed_password):
+        if not await verify_password(password, user.hashed_password):
             return None
         return user
 
-    def create_access_token(self, data: dict, expires_delta: Optional[timedelta] = None) -> str:
+    @staticmethod
+    def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
         """
-        Create a JWT access token
-
-        Args:
-            data: Data to encode in the token
-            expires_delta: Optional expiration time delta
-
-        Returns:
-            Encoded JWT token
-        """
+        Create a JWT access token."""
         to_encode = data.copy()
         if expires_delta:
             expire = datetime.now(timezone.utc) + expires_delta
@@ -57,19 +42,9 @@ class AuthService:
         encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
         return encoded_jwt
 
-    def get_current_user(self, token: str) -> User:
+    async def get_current_user(self, token: str) -> User:
         """
-        Get current user from JWT token
-
-        Args:
-            token: JWT token
-
-        Returns:
-            Current user
-
-        Raises:
-            HTTPException: If token is invalid or user not found
-        """
+        Get current user from JWT token."""
         credentials_exception = HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Could not validate credentials",
@@ -84,7 +59,7 @@ class AuthService:
         except JWTError:
             raise credentials_exception
 
-        user = self.user_repo.get_by_username(token_data.username)
+        user = await self.user_repo.get_by_username(token_data.username)
         if user is None:
             raise credentials_exception
         return user
