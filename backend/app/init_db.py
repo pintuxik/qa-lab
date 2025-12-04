@@ -36,7 +36,7 @@ async def create_admin_user():
             admin_user = User(
                 username="admin",
                 email="admin@example.com",
-                hashed_password=get_password_hash("admin123"),
+                hashed_password=await get_password_hash("admin123"),
                 is_admin=True,
                 is_active=True,
             )
