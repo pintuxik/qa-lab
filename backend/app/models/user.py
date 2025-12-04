@@ -22,5 +22,9 @@ class User(IdMixin, TimestampMixin, Base):
     is_admin: Mapped[bool] = mapped_column(default=False, server_default=text("false"))
 
     tasks: Mapped[list["Task"]] = relationship(
-        "Task", back_populates="owner", cascade="all, delete-orphan", lazy="noload"
+        "Task",
+        back_populates="owner",
+        cascade="all, delete-orphan",
+        lazy="noload",
+        passive_deletes=False,  # Force ORM to handle cascade deletion, not database
     )
