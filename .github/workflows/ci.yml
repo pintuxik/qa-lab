@@ -115,6 +115,7 @@ jobs:
     permissions:
       contents: read
       packages: write
+      security-events: write  # Required for uploading SARIF results to GitHub Security tab
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
@@ -172,7 +173,8 @@ jobs:
       - name: Run Trivy vulnerability scanner - Backend
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/backend:${{ github.ref_name }}-${{ github.sha }}
+          # Use branch name tag (e.g., "main" or "release-v1.0.x") which is created by metadata-action
+          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/backend:${{ github.ref_name }}
           format: 'sarif'
           output: 'trivy-backend-results.sarif'
           severity: 'CRITICAL,HIGH'
@@ -187,7 +189,7 @@ jobs:
       - name: Run Trivy vulnerability scanner - Frontend
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/frontend:${{ github.ref_name }}-${{ github.sha }}
+          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/frontend:${{ github.ref_name }}
           format: 'sarif'
           output: 'trivy-frontend-results.sarif'
           severity: 'CRITICAL,HIGH'
