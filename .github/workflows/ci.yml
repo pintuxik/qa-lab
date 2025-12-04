@@ -149,6 +149,8 @@ jobs:
           labels: ${{ steps.meta-backend.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          provenance: false  # Disable attestation to avoid extra untagged manifests
+          sbom: false
 
       - name: Extract metadata for frontend
         id: meta-frontend
@@ -161,7 +163,7 @@ jobs:
             type=semver,pattern={{version}}
 
       - name: Build and push frontend image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: ./frontend
           push: true
@@ -169,6 +171,8 @@ jobs:
           labels: ${{ steps.meta-frontend.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          provenance: false  # Disable attestation to avoid extra untagged manifests
+          sbom: false
 
       - name: Run Trivy vulnerability scanner - Backend
         uses: aquasecurity/trivy-action@master
@@ -180,7 +184,7 @@ jobs:
           severity: 'CRITICAL,HIGH'
 
       - name: Upload Trivy results - Backend
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         if: always()
         with:
           sarif_file: 'trivy-backend-results.sarif'
@@ -195,7 +199,7 @@ jobs:
           severity: 'CRITICAL,HIGH'
 
       - name: Upload Trivy results - Frontend
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         if: always()
         with:
           sarif_file: 'trivy-frontend-results.sarif'

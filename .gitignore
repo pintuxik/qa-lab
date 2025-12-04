@@ -239,3 +239,7 @@ Thumbs.db
 # Claude files
 CLAUDE.MD
 .claude
+
+# Kubernetes secrets (never commit actual secrets!)
+k8s/**/secrets.yml
+k8s/secrets.yml
