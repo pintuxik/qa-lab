@@ -1,8 +1,14 @@
-"""Initial migration - create users and tasks tables
+"""Initial schema for v0.0.1
 
-Revision ID: 001
+Revision ID: v0.0.1
 Revises:
-Create Date: 2025-01-17 12:00:00.000000
+Create Date: 2025-12-08
+
+This is a squashed migration combining:
+- 001_initial_migration (users and tasks tables)
+- 002_add_database_defaults_and_constraint (server defaults, priority check)
+- 003_adding_updated_at_for_user (users.updated_at column)
+- 004_add_index_in_tasks_on_owner_id (performance index)
 
 """
 
@@ -12,7 +18,7 @@ import sqlalchemy as sa
 from alembic import op
 
 # revision identifiers, used by Alembic.
-revision: str = "001"
+revision: str = "v0.0.1"
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -29,6 +35,7 @@ def upgrade() -> None:
         sa.Column("is_active", sa.Boolean(), server_default=sa.text("true"), nullable=False),
         sa.Column("is_admin", sa.Boolean(), server_default=sa.text("false"), nullable=False),
         sa.Column("created_at", sa.DateTime(), server_default=sa.text("now()"), nullable=False),
+        sa.Column("updated_at", sa.DateTime(timezone=True), nullable=True),
         sa.PrimaryKeyConstraint("id"),
     )
     op.create_index(op.f("ix_users_email"), "users", ["email"], unique=True)
@@ -42,23 +49,23 @@ def upgrade() -> None:
         sa.Column("title", sa.String(), nullable=False),
         sa.Column("description", sa.Text(), nullable=True),
         sa.Column("is_completed", sa.Boolean(), server_default=sa.text("false"), nullable=False),
-        sa.Column("priority", sa.String(), server_default="medium", nullable=False),
+        sa.Column("priority", sa.String(), server_default=sa.text("'medium'"), nullable=False),
         sa.Column("category", sa.String(), nullable=True),
         sa.Column("created_at", sa.DateTime(), server_default=sa.text("now()"), nullable=False),
         sa.Column("updated_at", sa.DateTime(), server_default=sa.text("now()")),
         sa.Column("owner_id", sa.Integer(), nullable=False),
-        sa.ForeignKeyConstraint(
-            ["owner_id"],
-            ["users.id"],
-        ),
+        sa.ForeignKeyConstraint(["owner_id"], ["users.id"]),
         sa.PrimaryKeyConstraint("id"),
+        sa.CheckConstraint("priority IN ('low', 'medium', 'high')", name="task_priority_check"),
     )
     op.create_index(op.f("ix_tasks_id"), "tasks", ["id"], unique=False)
     op.create_index(op.f("ix_tasks_title"), "tasks", ["title"], unique=False)
+    op.create_index(op.f("ix_tasks_owner_id"), "tasks", ["owner_id"], unique=False)
 
 
 def downgrade() -> None:
     # Drop tasks table
+    op.drop_index(op.f("ix_tasks_owner_id"), table_name="tasks")
     op.drop_index(op.f("ix_tasks_title"), table_name="tasks")
     op.drop_index(op.f("ix_tasks_id"), table_name="tasks")
     op.drop_table("tasks")
