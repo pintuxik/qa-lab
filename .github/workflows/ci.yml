@@ -71,6 +71,7 @@ jobs:
           file: ./backend/coverage.xml
           flags: backend
           name: backend-coverage
+          token: ${{ secrets.CODECOV_TOKEN }}
         if: always()
 
   frontend-tests:
@@ -105,6 +106,7 @@ jobs:
           file: ./frontend/coverage.xml
           flags: frontend
           name: frontend-coverage
+          token: ${{ secrets.CODECOV_TOKEN }}
         if: always()
 
   build-images:
