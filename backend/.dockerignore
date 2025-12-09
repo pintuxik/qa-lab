@@ -1,3 +1,4 @@
+Dockerfile
 # Python
 __pycache__/
 *.py[cod]
@@ -50,12 +51,5 @@ test_*.py
 .DS_Store
 Thumbs.db
 
-# Allure
-allure-results/
-allure-report/
-
 # UV cache
 .uv/
-
-# Alembic (temporary - will be removed once migrations are in image)
-# migrations/versions/*.pyc

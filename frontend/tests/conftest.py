@@ -1,9 +1,18 @@
 """
 Pytest configuration and fixtures for frontend tests.
+
+Environment variables are loaded from .env.test by pytest-dotenv plugin.
+See pyproject.toml [tool.pytest.ini_options] env_files setting.
 """
+
+import os
 
 import pytest
 from app.main import create_app
+
+TESTING = os.getenv("TESTING")
+SECRET_KEY = os.getenv("SECRET_KEY")
+WTF_CSRF_ENABLED = os.getenv("WTF_CSRF_ENABLED")
 
 
 @pytest.fixture
@@ -12,9 +21,9 @@ def app():
     app = create_app()
     app.config.update(
         {
-            "TESTING": True,
-            "SECRET_KEY": "test-secret-key",
-            "WTF_CSRF_ENABLED": False,  # Disable CSRF for testing
+            "TESTING": TESTING,
+            "SECRET_KEY": SECRET_KEY,
+            "WTF_CSRF_ENABLED": WTF_CSRF_ENABLED,
         }
     )
 

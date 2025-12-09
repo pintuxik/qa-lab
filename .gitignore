@@ -135,9 +135,8 @@ celerybeat.pid
 *.sage.py
 
 # Environments
-backend/.env
-frontend/.env
-tests/.env
+.env
+tests/.env.test
 .envrc
 .venv
 env/
@@ -243,3 +242,4 @@ CLAUDE.MD
 # Kubernetes secrets (never commit actual secrets!)
 k8s/**/secrets.yml
 k8s/secrets.yml
+secrets.txt

@@ -61,8 +61,6 @@ jobs:
         run: uv sync --group test
 
       - name: Run tests with coverage
-        env:
-          TESTING: "true"
         run: uv run pytest tests/unit/ -v --cov=app --cov-report=xml --cov-report=term
 
       - name: Upload coverage to Codecov

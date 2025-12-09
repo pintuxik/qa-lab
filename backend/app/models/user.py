@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING
 from sqlalchemy import text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.database import Base
+from app.models import Base
 from app.models.mixin import IdMixin, TimestampMixin
 
 if TYPE_CHECKING:

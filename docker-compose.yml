@@ -1,62 +1,104 @@
 # ============================================================================
-# LOCAL TESTING CONFIGURATION - DO NOT USE IN PRODUCTION!
+# LOCAL CONFIGURATION - DO NOT USE IN PRODUCTION!
 # ============================================================================
-# This configuration is for LOCAL TESTING ONLY with integration tests.
-# For development with hot reload, use: docker-compose -f docker-compose.dev.yml up
+# Usage:
+#   Testing (no hot reload):  docker-compose up
+#   Development (hot reload): docker-compose up --watch
+#
+# Configuration is loaded from .env file
 #
 # ⚠️  SECURITY WARNING:
 # - TEST_MODE_ENABLED=true exposes /api/auth/test-cleanup endpoint
 # - This allows deletion of users via API key (for test cleanup)
 # - NEVER deploy this configuration to production environments!
-#
-# 📋 TODO: Create production configuration during CI/CD implementation
-# - Create docker-compose.prod.yml with TEST_MODE_ENABLED=false
-# - Or use environment-specific .env files
 # ============================================================================
 
 services:
   db:
     image: postgres:18
     environment:
-      POSTGRES_DB: taskmanager
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql
     ports:
       - "5432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER}"]
       interval: 10s
       timeout: 5s
       retries: 5
+
+  # Init container: runs migrations once before backend starts
+  migrations:
+    build: ./backend
+    environment:
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+    depends_on:
+      db:
+        condition: service_healthy
+    command: python app/run_migrations.py
+    restart: "no"
 
   backend:
     build: ./backend
     ports:
       - "8000:8000"
     environment:
-      - DATABASE_URL=postgresql+asyncpg://postgres:password@db:5432/taskmanager
-      - SECRET_KEY=your-super-secret-key-change-in-production
-      - FRONTEND_URL=http://localhost:5001
-      # ⚠️ TEST MODE - Enables test cleanup endpoint (LOCAL TESTING ONLY!)
-      - TEST_MODE_ENABLED=true
-      - TEST_API_KEY=your-super-secret-key-change-in-production
+      # Database configuration (matches K8s pattern)
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      # Application configuration
+      - SECRET_KEY=${SECRET_KEY}
+      - ALGORITHM=${ALGORITHM}
+      - ACCESS_TOKEN_EXPIRE_MINUTES=${ACCESS_TOKEN_EXPIRE_MINUTES}
+      - FRONTEND_URL=${FRONTEND_URL}
+      # Test mode (LOCAL TESTING ONLY!)
+      - TEST_MODE_ENABLED=${TEST_MODE_ENABLED}
+      - TEST_API_KEY=${TEST_API_KEY}
     depends_on:
       db:
         condition: service_healthy
-    command: bash start.sh
+      migrations:
+        condition: service_completed_successfully
+    command: granian --interface asgi app.main:app --host 0.0.0.0 --port 8000
+    develop:
+      watch:
+        - action: sync+restart
+          path: ./backend/app
+          target: /app/app
+          ignore:
+            - __pycache__/
+        - action: rebuild
+          path: ./backend/pyproject.toml
 
   frontend:
     build: ./frontend
     ports:
       - "5001:5001"
     environment:
-      - API_BASE_URL=http://backend:8000
-      - SECRET_KEY=your-super-secret-key-change-in-production
+      - API_BASE_URL=${API_BASE_URL}
+      - SECRET_KEY=${FLASK_SECRET_KEY}
     depends_on:
       - backend
-    command: bash start.sh
+    command: granian --interface wsgi app.main:app --backpressure 16 --host 0.0.0.0 --port 5001
+    develop:
+      watch:
+        - action: sync+restart
+          path: ./frontend/app
+          target: /app/app
+          ignore:
+            - __pycache__/
+        - action: rebuild
+          path: ./frontend/pyproject.toml
 
 volumes:
   postgres_data:

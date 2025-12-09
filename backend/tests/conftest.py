@@ -1,22 +1,19 @@
 """
 Pytest configuration and fixtures for backend tests.
-"""
 
-import os
+Environment variables are loaded from .env.test by pytest-dotenv plugin.
+See pyproject.toml [tool.pytest.ini_options] env_files setting.
+"""
 
 import pytest
 import pytest_asyncio
+from app.core.security import get_password_hash
+from app.database import get_db
+from app.main import app
+from app.models import Base, Task, User
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy import event
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
-
-# Set testing environment variable before importing app
-os.environ["TESTING"] = "true"
-
-from app.core.security import get_password_hash
-from app.database import Base, get_db
-from app.main import app
-from app.models import Task, User
 from tests.test_data import Endpoints, TestUsers
 
 # Use in-memory Async SQLite for testing with aiosqlite driver and in-memory DB

@@ -43,25 +43,30 @@ A production-ready full-stack task management application built with FastAPI (ba
    cd qa-lab
    ```
 
-2. **Start all services:**
+2. **Set up environment files:**
    ```bash
-   # Production-like mode (recommended for testing)
-   docker-compose up --build
-   
-   # OR Development mode with hot reload
-   docker-compose -f docker-compose.dev.yml up --build
+   ./setup-env.sh
    ```
 
-3. **Wait for services to start** (first run may take a few minutes)
+3. **Start all services:**
+   ```bash
+   # Normal mode (recommended for testing)
+   docker-compose up --build
 
-4. **Run tests:**
-    ```bash
+   # OR Development mode with hot reload
+   docker-compose up --build --watch
+   ```
+
+4. **Wait for services to start** (first run may take a few minutes)
+
+5. **Run tests:**
+   ```bash
    # Run all tests (unit + API + UI)
    chmod +x run_all_tests.sh
    ./run_all_tests.sh
    ```
 
-5. **Access the application:**
+6. **Access the application:**
    - **Frontend**: http://localhost:5001
    - **Backend API**: http://localhost:8000
    - **API Documentation**: http://localhost:8000/docs
@@ -105,52 +110,53 @@ qa-lab/
 │   │   └── __init__.py
 │   │── tests/                   # Frontend unit tests
 ├── tests/                        # Integration tests
-│   ├── api/                     # API integration tests 
+│   ├── api/                     # API integration tests
 │   └── ui/                      # UI integration tests
-├── docker-compose.yml            # Production-like setup (no volumes)
-└── docker-compose.dev.yml        # Development setup (with volumes)
+└── docker-compose.yml            # Docker services (supports --watch for dev)
 ```
 
 ## 🔧 Configuration
 
-### Environment Variables
+### Container-First Development
 
-The project uses `.env` files for configuration. Example templates are provided:
+This project uses a **container-first approach** - all services run in Docker containers. No local installation of PostgreSQL or service-specific configuration is needed. This ensures consistent behavior across Darwin, Linux, and Windows/WSL.
 
-- [tests/.env.example](tests/.env.example) - Integration configuration
-- [backend/.env.example](backend/.env.example) - Backend configuration
-- [frontend/.env.example](frontend/.env.example) - Frontend configuration
+### Environment Files
+
+| File | Purpose | Committed |
+|------|---------|-----------|
+| `.env.example` | Template for docker-compose | Yes |
+| `.env` | Docker Compose config (generated) | No |
+| `backend/.env.test` | Backend unit test config | Yes |
+| `frontend/.env.test` | Frontend unit test config | Yes |
+| `tests/.env.test.example` | Template for integration tests | Yes |
+| `tests/.env.test` | Integration test config (generated) | No |
 
 **Quick Setup:**
 ```bash
-# Copy example files
-cp tests/.env.example tests/.env
-cp backend/.env.example backend/.env
-cp frontend/.env.example frontend/.env
+./setup-env.sh
 ```
 
-**Key Variables:**
+This creates:
+- `.env` - Docker Compose configuration (from `.env.example`)
+- `tests/.env.test` - Integration test configuration (from `tests/.env.test.example`)
 
-**Backend (.env)**
-```
-DATABASE_URL=postgresql+psycopg://postgres:password@db:5432/taskmanager
-SECRET_KEY=<your-generated-secret-key>
-ALGORITHM=HS256
-ACCESS_TOKEN_EXPIRE_MINUTES=30
+**Key Variables (root .env for Docker Compose):**
+```bash
+# Database
+DB_HOST=db
+DB_PORT=5432
+DB_NAME=taskmanager
+DB_USER=postgres
+DB_PASSWORD=password
+
+# Application secrets
+SECRET_KEY=local-dev-secret-key-do-not-use-in-production
+FLASK_SECRET_KEY=local-dev-flask-secret-do-not-use-in-production
+
+# Service URLs
 FRONTEND_URL=http://localhost:5001
-```
-
-**Frontend (.env)**
-```
 API_BASE_URL=http://backend:8000
-SECRET_KEY=<your-generated-secret-key>
-```
-
-**Tests (.env)**
-```
-API_BASE_URL=http://localhost:8000
-FRONTEND_URL=http://localhost:5001
-HEADLESS=true
 ```
 
 ## 🛠️ Development
@@ -221,11 +227,11 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 # Navigate to the project directory
 cd qa-lab
 
-# Start all services (production-like, no hot reload)
+# Start all services (no hot reload)
 docker-compose up
 
 # Start in development mode (with hot reload)
-docker-compose -f docker-compose.dev.yml up
+docker-compose up --watch
 
 # Start in background
 docker-compose up -d
@@ -251,10 +257,10 @@ docker-compose logs frontend
 docker-compose logs db
 ```
 
-### Docker Compose Files
+### Docker Compose
 
-- **`docker-compose.yml`** - Production-like setup without volume mounts. Use this for running tests.
-- **`docker-compose.dev.yml`** - Development setup with volume mounts for hot code reloading. Use this when actively developing.
+- **`docker-compose up`** - Normal mode without hot reload. Use this for running tests.
+- **`docker-compose up --watch`** - Development mode with file sync for hot reloading. Use this when actively developing.
 
 ## 🚀 Future Enhancements
 

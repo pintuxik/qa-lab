@@ -14,16 +14,6 @@ frontend/
 └── Dockerfile           # Container definition
 ```
 
-## Running Locally
-
-```bash
-# Install dependencies
-uv sync
-
-# Run the application
-python app/__init__.py
-```
-
 ## Running with Docker
 
 ```bash
@@ -38,7 +28,7 @@ The frontend will be available at **http://localhost:5001**
 
 ## Architecture
 
-- **Application Factory Pattern**: `create_app()` in `app/__init__.py` creates and configures the Flask app
+- **Application Factory Pattern**: `create_app()` in `app/main.py` creates and configures the Flask app
 - **Modular Routes**: All route handlers are in `app/routes.py` and registered via `register_routes()`
 - **Flexible Imports**: Hybrid import system supports both direct script execution and module imports
 - **Environment Config**: Uses `.env` file for configuration

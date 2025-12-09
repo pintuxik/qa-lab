@@ -1,6 +1,9 @@
 """
 Global pytest configuration for Playwright testing with Allure integration.
 
+Environment variables are loaded from .env.test by pytest-dotenv plugin.
+See pyproject.toml [tool.pytest.ini_options] env_files setting.
+
 Fixture scopes:
 - Playwright session (singleton): Reused across all tests
 - Browser (function): Created fresh per test for isolation
@@ -26,10 +29,13 @@ import pytest
 from common.utils import get_screenshot_path
 from playwright.sync_api import Browser, BrowserContext, Page, sync_playwright
 
-# URLs
-FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5001")
-API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000")
-TEST_API_KEY = os.getenv("TEST_API_KEY", "your-super-secret-key-change-in-production")
+# URLs - loaded from .env.test, no defaults
+FRONTEND_URL = os.getenv("FRONTEND_URL")
+HEADLESS = os.getenv("HEADLESS").lower() == "true"
+SLOW_MO = float(os.getenv("SLOW_MO"))
+API_BASE_URL = os.getenv("API_BASE_URL")
+TEST_API_KEY = os.getenv("TEST_API_KEY")
+API_TIMEOUT = float(os.getenv("API_TIMEOUT"))
 
 
 @pytest.fixture(scope="session")
@@ -42,10 +48,9 @@ def playwright_session():
 @pytest.fixture(scope="function")
 def browser_type_launch_args():
     """Function-scoped browser launch args - can vary per test if needed."""
-    headless = os.getenv("HEADLESS", "false").lower() == "true"
     return {
-        "headless": headless,  # Set via HEADLESS env var
-        "slow_mo": 300 if not headless else 0,  # Slow down for visibility in headed mode
+        "headless": HEADLESS,
+        "slow_mo": SLOW_MO if not HEADLESS else 0,
         "args": ["--no-sandbox", "--disable-dev-shm-usage", "--disable-gpu", "--window-size=1920,1080"],
     }
 
@@ -205,7 +210,7 @@ def pytest_sessionfinish(session, exitstatus):
 @pytest.fixture(scope="function")
 def api_client():
     """Provide a requests session for API calls with global timeout."""
-    with httpx.Client(timeout=10.0) as client:
+    with httpx.Client(timeout=API_TIMEOUT) as client:
         yield client
 
 

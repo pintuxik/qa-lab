@@ -13,8 +13,36 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 # Add the parent directory to the path to import app modules
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
-from app.core.config import settings
 from app.models import Base, Task, User  # noqa: F401 - Import models to register them with Base
+
+
+def get_database_url() -> str:
+    """Construct DATABASE_URL from environment variables.
+
+    Supports two modes:
+    1. Direct DATABASE_URL if set
+    2. Construct from DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD
+    """
+    # Check for direct DATABASE_URL first
+    database_url = os.getenv("DATABASE_URL")
+    if database_url:
+        return database_url
+
+    # Construct from components
+    db_host = os.getenv("DB_HOST")
+    db_port = os.getenv("DB_PORT")
+    db_name = os.getenv("DB_NAME")
+    db_user = os.getenv("DB_USER")
+    db_password = os.getenv("DB_PASSWORD")
+
+    if not all([db_host, db_port, db_name, db_user, db_password]):
+        raise ValueError(
+            "Database configuration incomplete. Set either DATABASE_URL or all of: "
+            "DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD"
+        )
+
+    return f"postgresql+asyncpg://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}"
+
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -25,8 +53,8 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-# Set the SQLAlchemy URL from environment variable
-config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
+# Set the SQLAlchemy URL from environment variables
+config.set_main_option("sqlalchemy.url", get_database_url())
 
 # add your model's MetaData object here
 # for 'autogenerate' support

@@ -1,5 +1,8 @@
 """
 Global pytest configuration for API integration testing with Allure.
+
+Environment variables are loaded from .env.test by pytest-dotenv plugin.
+See pyproject.toml [tool.pytest.ini_options] env_files setting.
 """
 
 import os
@@ -8,9 +11,10 @@ import allure
 import httpx
 import pytest
 
-# API Configuration
-API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000")
-TEST_API_KEY = os.getenv("TEST_API_KEY", "your-super-secret-key-change-in-production")
+# API Configuration - loaded from .env.test
+API_BASE_URL = os.getenv("API_BASE_URL")
+TEST_API_KEY = os.getenv("TEST_API_KEY")
+API_TIMEOUT = float(os.getenv("API_TIMEOUT"))
 
 
 @pytest.hookimpl(tryfirst=True, hookwrapper=True)
@@ -50,10 +54,9 @@ def pytest_sessionfinish(session, exitstatus):
     # Cleanup: Delete test users using secure test-cleanup endpoint
     if TEST_API_KEY:
         try:
-            api_base_url = os.getenv("API_BASE_URL", "http://localhost:8000")
             with httpx.Client() as api_client:
                 response = api_client.post(
-                    f"{api_base_url}/api/users/test-cleanup",
+                    f"{API_BASE_URL}/api/users/test-cleanup",
                     json={"username_patterns": ["api_user_*"]},
                     headers={"X-Test-API-Key": TEST_API_KEY},
                 )
@@ -65,7 +68,7 @@ def pytest_sessionfinish(session, exitstatus):
 
 
 @pytest.fixture(scope="function")
-def api_client(api_base_url):
+def api_client():
     """Provide an httpx client for API calls with global timeout.
 
     Uses httpx.Client (sync) for consistency with async backend.
@@ -78,7 +81,7 @@ def api_client(api_base_url):
     Can be overridden per request by passing timeout parameter.
     """
     # httpx.Client with default timeout
-    with httpx.Client(timeout=10.0) as client:
+    with httpx.Client(timeout=API_TIMEOUT) as client:
         yield client
 
 

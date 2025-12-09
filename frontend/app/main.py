@@ -10,7 +10,12 @@ load_dotenv()
 def create_app():
     """Application factory pattern"""
     app = Flask(__name__)
-    app.secret_key = os.getenv("SECRET_KEY", "dev-secret-key")
+
+    # SECRET_KEY is required - no default value for security
+    secret_key = os.getenv("SECRET_KEY")
+    if not secret_key:
+        raise ValueError("SECRET_KEY environment variable is required")
+    app.secret_key = secret_key
 
     # Register routes - handle both relative and absolute imports
     try:
