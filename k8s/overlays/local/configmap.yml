@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: qa-lab-config
+  namespace: local
+data:
+  # Backend configuration
+  ALGORITHM: "HS256"
+  ACCESS_TOKEN_EXPIRE_MINUTES: "30"
+  FRONTEND_URL: "http://localhost:5001"
+
+  # Frontend configuration
+  API_BASE_URL: "http://backend:8000"
+
+  # Database connection components (non-sensitive)
+  # DATABASE_URL is constructed at runtime from these + secrets
+  DB_HOST: "db"
+  DB_PORT: "5432"
+  DB_NAME: "taskmanager"
+
+  # Local development features
+  DEBUG: "true"
+  LOG_LEVEL: "DEBUG"
+
+  # Testing features
+  TEST_MODE_ENABLED: "true"
+  TEST_API_KEY: "local-test-api-key-do-not-use-in-production"

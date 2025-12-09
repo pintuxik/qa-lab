@@ -1,0 +1,82 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  labels:
+    app: backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      initContainers:
+        - name: wait-for-db
+          image: postgres:18-alpine
+          command:
+            - sh
+            - -c
+            - |
+              until pg_isready -h $(DB_HOST) -p $(DB_PORT) -U $(DB_USER); do
+                echo "Waiting for database..."
+                sleep 2
+              done
+          envFrom:
+            - configMapRef:
+                name: qa-lab-config
+            - secretRef:
+                name: qa-lab-secrets
+        - name: run-migrations
+          image: backend:latest
+          command:
+            - python
+            - app/run_migrations.py
+          envFrom:
+            - configMapRef:
+                name: qa-lab-config
+            - secretRef:
+                name: qa-lab-secrets
+      containers:
+        - name: backend
+          image: backend:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8000
+              name: http
+          command:
+            - granian
+            - --interface
+            - asgi
+            - app.main:app
+            - --host
+            - "0.0.0.0"
+            - --port
+            - "8000"
+          envFrom:
+            - configMapRef:
+                name: qa-lab-config
+            - secretRef:
+                name: qa-lab-secrets
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 5

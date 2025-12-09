@@ -1,0 +1,26 @@
+# Patch services to use NodePort with specific ports for integration testing
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend
+spec:
+  type: NodePort
+  ports:
+    - port: 5001
+      targetPort: 5001
+      nodePort: 30501
+      protocol: TCP
+      name: http
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend
+spec:
+  type: NodePort
+  ports:
+    - port: 8000
+      targetPort: 8000
+      nodePort: 30800
+      protocol: TCP
+      name: http
