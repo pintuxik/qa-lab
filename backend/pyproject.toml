@@ -45,9 +45,7 @@ addopts = [
     "--strict-markers",
 ]
 # Load test environment from .env and .env.test file
-env_files = [
-    ".env",
-    ".env.test"]
+env_files = [".env.test"]
 # PERFORMANCE: Using "auto" mode for convenience
 # "auto" has slight overhead but automatically detects async tests
 # For better performance, use "strict" mode and add @pytest.mark.asyncio to all tests

@@ -36,6 +36,4 @@ addopts = [
     "--strict-markers",
 ]
 # Load test environment from .env and .env.test file
-env_files = [
-    ".env",
-    ".env.test"]
+env_files = [".env.test"]
