@@ -156,7 +156,6 @@ def on_test_start(environment, **kwargs):
     print("🚀 LOAD TEST STARTING")
     print("=" * 80)
     print(f"Target: {environment.host}")
-    print("Testing synchronous API performance...")
     print("=" * 80 + "\n")
 
 
@@ -166,13 +165,8 @@ def on_test_stop(environment, **kwargs):
     print("\n" + "=" * 80)
     print("✅ LOAD TEST COMPLETED")
     print("=" * 80)
-    print("\nCheck the results above to determine if async migration is needed.")
     print("\nKey metrics to evaluate:")
     print("  • Response times (avg, p95, p99)")
     print("  • Failure rate")
     print("  • Requests per second (RPS)")
-    print("\nRecommendations:")
-    print("  • If p95 > 1000ms: Consider async migration")
-    print("  • If failure rate > 1%: Investigate bottlenecks")
-    print("  • If RPS < 100: Current sync approach may be sufficient")
     print("=" * 80 + "\n")

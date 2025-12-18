@@ -1,9 +1,14 @@
 """
 Integration tests for User Management API endpoints.
+
+Uses API client abstraction for clean, maintainable tests.
 """
 
 import allure
 import pytest
+
+from tests.api.clients import UsersAPIClient
+from tests.common.factories import UserFactory
 
 
 @allure.feature("User Management API")
@@ -15,73 +20,51 @@ class TestUserRegistration:
     @allure.title("Register new user successfully")
     @allure.description("Verify that a new user can be registered with valid credentials")
     @pytest.mark.integration
-    def test_register_user_success(self, api_client, api_base_url, test_user_credentials):
+    def test_register_user_success(self, users_api: UsersAPIClient):
         """Test successful user registration."""
-        with allure.step("Prepare registration data"):
-            user_data = test_user_credentials
-            allure.attach(str(user_data), name="Registration Data", attachment_type=allure.attachment_type.JSON)
+        user = UserFactory.api_user()
 
-        with allure.step("Send registration request"):
-            response = api_client.post(f"{api_base_url}/api/users/", json=user_data)
-            allure.attach(
-                response.text,
-                name="Response Body",
-                attachment_type=allure.attachment_type.JSON,
-            )
+        response = users_api.register(
+            username=user.username,
+            email=user.email,
+            password=user.password,
+        )
 
-        with allure.step("Verify response status code is 201"):
-            assert response.status_code == 201, f"Expected 201, got {response.status_code}"
-
-        with allure.step("Verify response contains user data"):
-            response_data = response.json()
-            assert "id" in response_data, "Response should contain user ID"
-            assert response_data["username"] == user_data["username"]
-            assert response_data["email"] == user_data["email"]
-            assert "hashed_password" not in response_data, "Password should not be exposed"
+        response.assert_created()
+        response.assert_field_exists("id")
+        response.assert_field_equals("username", user.username)
+        response.assert_field_equals("email", user.email)
+        response.assert_field_not_exists("hashed_password")
 
     @allure.severity(allure.severity_level.NORMAL)
     @allure.title("Register user with duplicate email")
     @allure.description("Verify that registration fails when email is already registered")
     @pytest.mark.integration
-    def test_register_duplicate_email(self, api_client, api_base_url, registered_user):
+    def test_register_duplicate_email(self, users_api: UsersAPIClient, registered_user):
         """Test registration with duplicate email fails."""
-        with allure.step("Attempt to register with existing email"):
-            duplicate_data = {
-                "username": "differentuser",
-                "email": registered_user["email"],
-                "password": "AnotherPass123!",
-            }
-            response = api_client.post(f"{api_base_url}/api/users/", json=duplicate_data)
-            allure.attach(response.text, name="Error Response", attachment_type=allure.attachment_type.JSON)
+        response = users_api.register(
+            username="differentuser",
+            email=registered_user["email"],
+            password="AnotherPass123!",
+        )
 
-        with allure.step("Verify response status code is 400"):
-            assert response.status_code == 400
-
-        with allure.step("Verify error message"):
-            response_data = response.json()
-            assert "Email already registered" in response_data["detail"]
+        response.assert_bad_request()
+        response.assert_error_contains("Email already registered")
 
     @allure.severity(allure.severity_level.NORMAL)
     @allure.title("Register user with duplicate username")
     @allure.description("Verify that registration fails when username is already taken")
     @pytest.mark.integration
-    def test_register_duplicate_username(self, api_client, api_base_url, registered_user):
+    def test_register_duplicate_username(self, users_api: UsersAPIClient, registered_user):
         """Test registration with duplicate username fails."""
-        with allure.step("Attempt to register with existing username"):
-            duplicate_data = {
-                "username": registered_user["username"],
-                "email": "different@example.com",
-                "password": "AnotherPass123!",
-            }
-            response = api_client.post(f"{api_base_url}/api/users/", json=duplicate_data)
-            allure.attach(response.text, name="Error Response", attachment_type=allure.attachment_type.JSON)
+        response = users_api.register(
+            username=registered_user["username"],
+            email="different@example.com",
+            password="AnotherPass123!",
+        )
 
-        with allure.step("Verify response status code is 400"):
-            assert response.status_code == 400
-
-        with allure.step("Verify error message"):
-            response_data = response.json()
-            assert "Username already taken" in response_data["detail"]
+        response.assert_bad_request()
+        response.assert_error_contains("Username already taken")
 
     @allure.severity(allure.severity_level.NORMAL)
     @allure.title("Register user with invalid data")
@@ -95,11 +78,10 @@ class TestUserRegistration:
             ({"username": "api_user", "email": "test@example.com"}, "password"),
         ],
     )
-    def test_register_missing_fields(self, api_client, api_base_url, invalid_data, expected_field):
+    def test_register_missing_fields(self, users_api: UsersAPIClient, invalid_data, expected_field):
         """Test registration with missing required fields."""
         with allure.step(f"Attempt registration without {expected_field}"):
-            response = api_client.post(f"{api_base_url}/api/users/", json=invalid_data)
-            allure.attach(response.text, name="Error Response", attachment_type=allure.attachment_type.JSON)
+            # Use raw post since we're testing malformed data
+            response = users_api.post(json=invalid_data)
 
-        with allure.step("Verify response indicates validation error"):
-            assert response.status_code == 422
+        response.assert_validation_error()

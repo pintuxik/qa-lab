@@ -20,13 +20,13 @@
                         <input type="password" class="form-control" id="password" name="password" required>
                     </div>
                     <div class="d-grid">
-                        <button type="submit" class="btn btn-primary">
+                        <button id="login" type="submit" class="btn btn-primary">
                             <i class="fas fa-sign-in-alt"></i> Login
                         </button>
                     </div>
                 </form>
                 <div class="text-center mt-3">
-                    <p>Don't have an account? <a href="{{ url_for('register') }}">Register here</a></p>
+                    <p>Don't have an account? <a id="register" href="{{ url_for('register') }}">Register here</a></p>
                 </div>
             </div>
         </div>

@@ -156,7 +156,7 @@ esac
 
 if [ ! -d "$PLAYWRIGHT_BROWSERS_PATH" ] 2>/dev/null ; then
     echo "Installing Playwright browsers..."
-    if uv run playwright install ; then
+    if uv run playwright install chromium --with-deps; then
         echo -e "${GREEN}✓ Playwright browsers installed${NC}"
     else
         echo -e "${YELLOW}⚠️  Failed to install Playwright browsers${NC}"

@@ -3,19 +3,19 @@
 {% block title %}Dashboard - Task Manager{% endblock %}
 
 {% block content %}
-<div class="row">
+<div id="header" class="row" >
     <div class="col-12">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h2><i class="fas fa-tachometer-alt"></i> Dashboard</h2>
-            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createTaskModal">
+            <button id="add-task" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createTaskModal">
                 <i class="fas fa-plus"></i> Add Task
             </button>
         </div>
     </div>
 </div>
 
-<div class="row mb-4">
-    <div class="col-md-3">
+<div class="row mb-4" id="statistics">
+    <div class="col-md-3" id="total">
         <div class="card bg-primary text-white">
             <div class="card-body">
                 <div class="d-flex justify-content-between">
@@ -28,7 +28,7 @@
             </div>
         </div>
     </div>
-    <div class="col-md-3">
+    <div class="col-md-3" id="completed">
         <div class="card bg-success text-white">
             <div class="card-body">
                 <div class="d-flex justify-content-between">
@@ -41,7 +41,7 @@
             </div>
         </div>
     </div>
-    <div class="col-md-3">
+    <div class="col-md-3" id="pending">
         <div class="card bg-warning text-white">
             <div class="card-body">
                 <div class="d-flex justify-content-between">
@@ -54,7 +54,7 @@
             </div>
         </div>
     </div>
-    <div class="col-md-3">
+    <div class="col-md-3" id="high-priority">
         <div class="card bg-danger text-white">
             <div class="card-body">
                 <div class="d-flex justify-content-between">
@@ -69,25 +69,25 @@
     </div>
 </div>
 
-<div class="row">
+<div class="row" id="tasks-section">
     <div class="col-12">
         <h3>Your Tasks</h3>
         {% if tasks %}
-            <div class="row">
+            <div class="row" id="tasks-list">
                 {% for task in tasks %}
                 <div class="col-md-6 col-lg-4 mb-3">
                     <div class="card task-card priority-{{ task.priority }} {{ 'completed-task' if task.is_completed else '' }}">
                         <div class="card-body">
                             <div class="d-flex justify-content-between align-items-start mb-2">
-                                <h5 class="card-title">{{ task.title }}</h5>
+                                <h5 id="card-title" class="card-title">{{ task.title }}</h5>
                                 <div class="dropdown">
-                                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                    <button id="dropdown-toggle" class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
                                         <i class="fas fa-ellipsis-v"></i>
                                     </button>
                                     <ul class="dropdown-menu">
                                         <li>
                                             <form method="POST" action="{{ url_for('toggle_task', task_id=task.id) }}" class="d-inline">
-                                                <button type="submit" class="dropdown-item">
+                                                <button id="complete-button" type="submit" class="dropdown-item">
                                                     <i class="fas fa-{{ 'undo' if task.is_completed else 'check' }}"></i>
                                                     {{ 'Mark Incomplete' if task.is_completed else 'Mark Complete' }}
                                                 </button>
@@ -96,7 +96,7 @@
                                         <li>
                                             <form method="POST" action="{{ url_for('delete_task', task_id=task.id) }}" class="d-inline" 
                                                   onsubmit="return confirm('Are you sure you want to delete this task?')">
-                                                <button type="submit" class="dropdown-item text-danger">
+                                                <button id="delete-button" type="submit" class="dropdown-item text-danger">
                                                     <i class="fas fa-trash"></i> Delete
                                                 </button>
                                             </form>
@@ -105,15 +105,15 @@
                                 </div>
                             </div>
                             {% if task.description %}
-                                <p class="card-text">{{ task.description }}</p>
+                                <p id="card-description" class="card-text">{{ task.description }}</p>
                             {% endif %}
                             <div class="d-flex justify-content-between align-items-center">
                                 <small class="text-muted">
-                                    <span class="badge bg-{{ 'success' if task.priority == 'low' else 'warning' if task.priority == 'medium' else 'danger' }}">
+                                    <span id="card-priority" class="badge bg-{{ 'success' if task.priority == 'low' else 'warning' if task.priority == 'medium' else 'danger' }}">
                                         {{ task.priority.title() }}
                                     </span>
                                     {% if task.category %}
-                                        <span class="badge bg-secondary">{{ task.category }}</span>
+                                        <span id="card-category" class="badge bg-secondary">{{ task.category }}</span>
                                     {% endif %}
                                 </small>
                                 <small class="text-muted">{{ task.created_at[:10] }}</small>
@@ -124,7 +124,7 @@
                 {% endfor %}
             </div>
         {% else %}
-            <div class="text-center py-5">
+            <div class="text-center py-5" id="no-tasks">
                 <i class="fas fa-tasks fa-3x text-muted mb-3"></i>
                 <h4 class="text-muted">No tasks yet</h4>
                 <p class="text-muted">Create your first task to get started!</p>

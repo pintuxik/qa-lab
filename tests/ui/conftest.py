@@ -1,41 +1,42 @@
 """
-Global pytest configuration for Playwright testing with Allure integration.
+UI-specific pytest fixtures for Playwright testing with Allure integration.
+
+Shared fixtures (api_client, api_base_url, credentials) are inherited from
+tests/conftest.py. This file contains only UI-specific fixtures:
+- Playwright browser, context, page management
+- Screenshot and trace capture on failure
+- Page Object fixtures (LoginPage, RegisterPage, DashboardPage)
 
 Environment variables are loaded from .env.test by pytest-dotenv plugin.
-See pyproject.toml [tool.pytest.ini_options] env_files setting.
 
 Fixture scopes:
 - Playwright session (singleton): Reused across all tests
-- Browser (function): Created fresh per test for isolation
+- Browser (session): Reused across all tests
 - Browser context (function): Fresh context per test
 - Page (function): Fresh page per test with global timeouts
 
 This enables:
-✅ Full test isolation (no state bleed between tests)
-✅ Parallel execution (4+ workers via pytest-xdist)
-✅ Trace recording on failure for debugging
-✅ Proper cleanup even on hard errors
-✅ Fast authenticated UI tests (API-based login, no UI registration/login)
+- Full test isolation (no state bleed between tests)
+- Parallel execution (4+ workers via pytest-xdist)
+- Trace recording on failure for debugging
+- Fast authenticated UI tests (API-based login, no UI registration/login)
 """
 
-import os
-import uuid
 from pathlib import Path
 from typing import Generator
 
 import allure
-import httpx
 import pytest
-from common.utils import get_screenshot_path
 from playwright.sync_api import Browser, BrowserContext, Page, sync_playwright
 
-# URLs - loaded from .env.test, no defaults
-FRONTEND_URL = os.getenv("FRONTEND_URL")
-HEADLESS = os.getenv("HEADLESS").lower() == "true"
-SLOW_MO = float(os.getenv("SLOW_MO"))
-API_BASE_URL = os.getenv("API_BASE_URL")
-TEST_API_KEY = os.getenv("TEST_API_KEY")
-API_TIMEOUT = float(os.getenv("API_TIMEOUT"))
+from tests.common.constants import Routes
+from tests.common.utils import get_screenshot_path
+from tests.config import config
+from tests.ui.pages import DashboardPage, LoginPage, RegisterPage
+
+# ============================================================================
+# Playwright Fixtures
+# ============================================================================
 
 
 @pytest.fixture(scope="session")
@@ -45,46 +46,43 @@ def playwright_session():
         yield p
 
 
-@pytest.fixture(scope="function")
-def browser_type_launch_args():
-    """Function-scoped browser launch args - can vary per test if needed."""
+@pytest.fixture(scope="session")
+def browser_type_launch_args() -> dict:
+    """Browser launch arguments"""
     return {
-        "headless": HEADLESS,
-        "slow_mo": SLOW_MO if not HEADLESS else 0,
-        "args": ["--no-sandbox", "--disable-dev-shm-usage", "--disable-gpu", "--window-size=1920,1080"],
+        "headless": config.HEADLESS,
+        "slow_mo": config.SLOW_MO if not config.HEADLESS else 0,
+        "args": [
+            "--no-sandbox",
+            "--disable-dev-shm-usage",
+            "--disable-gpu",
+            "--window-size=1920,1080",
+        ],
     }
 
 
-@pytest.fixture(scope="function")
-def browser_context_args():
-    """Function-scoped browser context args - fresh per test."""
-    return {
-        "viewport": {"width": 1920, "height": 1080},
-        "ignore_https_errors": True,
-        "accept_downloads": True,
-    }
-
-
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="session")
 def browser(playwright_session, browser_type_launch_args) -> Generator[Browser, None, None]:
-    """Function-scoped browser fixture - fresh browser per test.
-
-    This ensures:
-    - Full test isolation (no state/cookies carry over)
-    - Enables parallel execution with pytest-xdist
-    - Each test starts with clean browser instance
-    """
+    """One browser instance per session."""
     browser = playwright_session.chromium.launch(**browser_type_launch_args)
     yield browser
     browser.close()
 
 
 @pytest.fixture(scope="function")
-def browser_context(browser: Browser, browser_context_args) -> Generator[BrowserContext, None, None]:
-    """Function-scoped browser context - fresh context per test.
+def browser_context_args() -> dict:
+    """Browser context arguments - fresh per test."""
+    return {
+        "viewport": {"width": 1920, "height": 1080},
+        "ignore_https_errors": True,
+        "accept_downloads": True,
+        "color_scheme": "dark",
+    }
 
-    Always runs after browser fixture, ensuring proper cleanup order.
-    """
+
+@pytest.fixture(scope="function")
+def browser_context(browser: Browser, browser_context_args) -> Generator[BrowserContext, None, None]:
+    """Fresh browser context per test."""
     context = browser.new_context(**browser_context_args)
     yield context
     context.close()
@@ -92,36 +90,46 @@ def browser_context(browser: Browser, browser_context_args) -> Generator[Browser
 
 @pytest.fixture(scope="function")
 def page(browser_context: BrowserContext, request) -> Generator[Page, None, None]:
-    """Function-scoped page fixture with:
-    - Global timeout configuration (10s per repo standards)
-    - Trace recording on failure for debugging
+    """Page fixture with tracing, screenshot on failure, and timeout configuration.
 
-    Traces include: network, DOM, screenshot snapshots.
-    Saved on failure to help debug flaky tests.
+    Features:
+    - Global timeout of 10 seconds per repo standards
+    - Trace recording (saved on failure for debugging)
+    - Screenshot capture on failure
+    - Traces include: network, DOM, screenshot snapshots
     """
     # Start trace recording
     browser_context.tracing.start(screenshots=True, snapshots=True, sources=True)
 
     page = browser_context.new_page()
-
-    # Set global default timeout to 10 seconds per repo standards
     page.set_default_timeout(10000)  # 10 seconds
-    page.set_default_navigation_timeout(10000)  # 10 seconds
+    page.set_default_navigation_timeout(10000)
 
     yield page
 
-    # Stop trace and save on failure
+    # Handle failure artifacts (screenshot + trace)
     rep_call = getattr(request.node, "rep_call", None)
     if rep_call and rep_call.failed:
-        trace_path = Path(get_screenshot_path(f"{request.node.name}_trace.zip"))
+        test_name = request.node.name
+
+        # Take screenshot on failure
+        screenshot_path = get_screenshot_path(f"{test_name}_failure.png")
+        page.screenshot(path=screenshot_path, full_page=True)
+        with open(screenshot_path, "rb") as screenshot_file:
+            allure.attach(
+                screenshot_file.read(),
+                name=f"Screenshot on failure: {test_name}",
+                attachment_type=allure.attachment_type.PNG,
+            )
+
+        # Save trace on failure
+        trace_path = Path(get_screenshot_path(f"{test_name}_trace.zip"))
         trace_path.parent.mkdir(parents=True, exist_ok=True)
         browser_context.tracing.stop(path=str(trace_path))
-
-        # Attach trace to Allure
         with open(trace_path, "rb") as f:
             allure.attach(
                 f.read(),
-                name=f"Trace: {request.node.name}",
+                name=f"Trace: {test_name}",
                 attachment_type="application/zip",
             )
     else:
@@ -130,130 +138,52 @@ def page(browser_context: BrowserContext, request) -> Generator[Page, None, None
     page.close()
 
 
-@pytest.fixture(autouse=True)
-def screenshot_on_failure(request, page):
-    """Automatically take screenshot on test failure and attach to Allure."""
-    yield
-
-    rep_call = getattr(request.node, "rep_call", None)
-    if rep_call and rep_call.failed:
-        test_name = request.node.name
-        screenshot_path = get_screenshot_path(f"{test_name}_failure.png")
-
-        # Take screenshot
-        page.screenshot(path=screenshot_path, full_page=True)
-
-        # Attach to Allure report
-        with open(screenshot_path, "rb") as screenshot_file:
-            allure.attach(
-                screenshot_file.read(),
-                name=f"Screenshot on failure: {test_name}",
-                attachment_type=allure.attachment_type.PNG,
-            )
-
-
-@pytest.hookimpl(tryfirst=True, hookwrapper=True)
-def pytest_runtest_makereport(item, call):
-    """Hook to capture test results for screenshot on failure."""
-    outcome = yield
-    rep = outcome.get_result()
-    setattr(item, "rep_" + rep.when, rep)
-
-
-@pytest.fixture(autouse=True)
-def allure_environment_info():
-    """Add environment information to Allure report."""
-    allure.dynamic.label("framework", "pytest")
-    allure.dynamic.label("browser", "chromium")
-    allure.dynamic.label("test_type", "ui")
-
-
 # ============================================================================
-# Authenticated UI Test Fixtures - Fast API-based Login for Task Tests
+# Credential Fixture - Alias for UI tests
 # ============================================================================
 
 
-@pytest.fixture(scope="session")
-def api_base_url():
-    """Provide the base URL for API requests."""
-    return API_BASE_URL
+@pytest.fixture(scope="function")
+def test_user_credentials(ui_test_user_credentials):
+    """Alias ui_test_user_credentials for backward compatibility.
 
-
-def pytest_sessionfinish(session, exitstatus):
+    UI tests use the 'ui_user_' prefix for test users.
     """
-    Hook called after all tests complete (including all xdist workers).
+    return ui_test_user_credentials
 
-    This ensures cleanup happens only once after all parallel workers finish,
-    avoiding race conditions where cleanup deletes users while tests are running.
-    """
-    # Skip cleanup if running in xdist worker process
-    # Only the master process (or non-xdist runs) should do cleanup
-    if hasattr(session.config, "workerinput"):
-        return
 
-    # Cleanup: Delete test users using secure test-cleanup endpoint
-    if TEST_API_KEY:
-        try:
-            with httpx.Client() as api_client:
-                response = api_client.post(
-                    f"{API_BASE_URL}/api/users/test-cleanup",
-                    json={"username_patterns": ["ui_user_*"]},
-                    headers={"X-Test-API-Key": TEST_API_KEY},
-                )
-                if response.status_code != 200:
-                    print(f"Warning: Failed to cleanup users: {response.text}")
-        except Exception as e:
-            # Log cleanup failure but don't fail the test run
-            print(f"Warning: Failed to cleanup users by pattern 'ui_user_*': {str(e)}")
+# ============================================================================
+# User Registration and Authentication Fixtures
+# ============================================================================
 
 
 @pytest.fixture(scope="function")
-def api_client():
-    """Provide a requests session for API calls with global timeout."""
-    with httpx.Client(timeout=API_TIMEOUT) as client:
-        yield client
-
-
-@pytest.fixture(scope="function")
-def test_user_credentials():
-    """Generate unique test user credentials per test."""
-    unique_id = str(uuid.uuid4())[:8]  # First 8 chars of UUID
-    return {
-        "username": f"ui_user_{unique_id}",
-        "email": f"ui_user_{unique_id}@example.com",
-        "password": "TestPass123!",
-    }
-
-
-@pytest.fixture(scope="function")
-def registered_test_user(api_client, test_user_credentials):
+def registered_test_user(api_client, api_base_url, test_user_credentials):
     """Register a new test user via API (fast, deterministic).
 
     Returns dict with user credentials and ID.
-    Cleans up the user after the test completes.
+    Cleanup is handled by pytest_sessionfinish in root conftest.
     """
-    with allure.step("Register test user via API"):
+    with allure.step(f"Register test user via API: {test_user_credentials['username']}"):
         response = api_client.post(
-            f"{API_BASE_URL}/api/users/",
+            f"{api_base_url}/api/users/",
             json=test_user_credentials,
             timeout=10,
         )
         assert response.status_code == 201, f"Failed to register user: {response.text}"
         user_data = response.json()
-
         allure.attach(
             f"Username: {test_user_credentials['username']}\nEmail: {test_user_credentials['email']}",
             name="Test User Created",
             attachment_type=allure.attachment_type.TEXT,
         )
 
-    user_info = {**test_user_credentials, "id": user_data.get("id")}
-    yield user_info
+    yield {**test_user_credentials, "id": user_data.get("id")}
 
 
 @pytest.fixture(scope="function")
-def authenticated_page(page: Page, registered_test_user):
-    """Provide an authenticated Playwright page ready for testing via API-based login.
+def authenticated_page(page: Page, registered_test_user) -> Page:
+    """Provide an authenticated Playwright page ready for testing.
 
     This fixture:
     1. Registers user via API (fast, ~1 second)
@@ -261,36 +191,24 @@ def authenticated_page(page: Page, registered_test_user):
     3. Navigates to dashboard
     4. Returns page already logged in and ready for testing
 
-    ✅ Faster than UI login: No form filling/clicking, pure HTTP
-    ✅ Reliable: Uses Playwright's page.request for proper cookie/session handling
-    ✅ Tests Flask session: Flask /login endpoint is called with credentials
-    ✅ Deterministic: No timing-dependent UI waits
+    Benefits:
+    - Faster than UI login: No form filling/clicking, pure HTTP
+    - Reliable: Uses Playwright's page.request for proper cookie/session handling
+    - Tests Flask session: Flask /login endpoint is called with credentials
+    - Deterministic: No timing-dependent UI waits
 
     Use this for all feature tests (task creation, filtering, etc).
     Only use plain 'page' fixture for form validation tests.
-
-    Example:
-        def test_create_task(authenticated_page):
-            # Already logged in, on dashboard
-            authenticated_page.click('button:has-text("Add Task")')
     """
     with allure.step("Login via API (page.request context)"):
-        # Use page.request.post() to make login call within browser context
-        # This ensures all cookies and session data are properly set
-        # and respects the browser's cookie jar
         login_response = page.request.post(
-            f"{FRONTEND_URL}/login",
+            f"{config.FRONTEND_URL}/login",
             form={
                 "username": registered_test_user["username"],
                 "password": registered_test_user["password"],
             },
         )
-        # Flask redirects after successful login (HTTP 302 or returns 200)
-        assert login_response.status in [
-            200,
-            302,
-        ], f"Login failed with status {login_response.status}: {login_response.text}"
-
+        assert login_response.status == 200, f"Login failed with status {login_response.status}: {login_response.text}"
         allure.attach(
             f"User: {registered_test_user['username']}\nLogin Status: {login_response.status}",
             name="API Login Result",
@@ -298,7 +216,57 @@ def authenticated_page(page: Page, registered_test_user):
         )
 
     with allure.step("Navigate to dashboard"):
-        page.goto(f"{FRONTEND_URL}/dashboard")
-        page.wait_for_url(f"{FRONTEND_URL}/dashboard")
+        page.goto(f"{config.FRONTEND_URL}{Routes.DASHBOARD}")
+        page.wait_for_url(f"{config.FRONTEND_URL}{Routes.DASHBOARD}")
 
     return page
+
+
+# ============================================================================
+# Page Object Fixtures - Use these for clean, maintainable tests
+# ============================================================================
+
+
+@pytest.fixture(scope="function")
+def login_page(page: Page):
+    """Provide LoginPage object for unauthenticated login tests.
+
+    Use this fixture when testing:
+    - Login form validation
+    - Invalid credentials
+    - Navigation to register
+
+    Example:
+        def test_login_failure(login_page):
+            login_page.open()
+            login_page.login_and_expect_failure("wrong", "credentials")
+    """
+    return LoginPage(page, config.FRONTEND_URL)
+
+
+@pytest.fixture(scope="function")
+def register_page(page: Page):
+    """Provide RegisterPage object for registration tests.
+
+    Example:
+        def test_registration(register_page):
+            register_page.open()
+            register_page.register_and_expect_success("user", "email@test.com", "pass")
+    """
+    return RegisterPage(page, config.FRONTEND_URL)
+
+
+@pytest.fixture(scope="function")
+def dashboard_page(authenticated_page: Page):
+    """Provide DashboardPage object (already authenticated).
+
+    This fixture:
+    1. Uses authenticated_page (user already logged in)
+    2. Returns DashboardPage ready for task operations
+
+    Example:
+        def test_create_task(dashboard_page):
+            dashboard_page.create_task(title="My Task")
+            dashboard_page.expect_task_exists("My Task")
+    """
+    return DashboardPage(authenticated_page, config.FRONTEND_URL)

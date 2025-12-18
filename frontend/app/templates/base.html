@@ -31,7 +31,7 @@
             {% if session.username %}
             <div class="navbar-nav ms-auto">
                 <span class="navbar-text me-3">Welcome, {{ session.username }}!</span>
-                <a class="btn btn-outline-light" href="{{ url_for('logout') }}">
+                <a id="logout" class="btn btn-outline-light" href="{{ url_for('logout') }}">
                     <i class="fas fa-sign-out-alt"></i> Logout
                 </a>
             </div>
@@ -43,9 +43,9 @@
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
-                    <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                    <div id="alert" class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
                         {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        <button id="alert-close" type="button" class="btn-close" data-bs-dismiss="alert"></button>
                     </div>
                 {% endfor %}
             {% endif %}

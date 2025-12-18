@@ -1,16 +1,15 @@
 """
 UI Integration tests for User Management flows.
-"""
 
-import os
-import time
+Uses Page Object Model for clean, maintainable tests.
+"""
 
 import allure
 import pytest
-from playwright.sync_api import Page, expect
 
-# Frontend URL
-FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5001")
+from tests.common.constants import Routes
+from tests.common.factories import UserFactory
+from tests.ui.pages import RegisterPage
 
 
 @allure.feature("User Management UI")
@@ -22,58 +21,33 @@ class TestUserRegistration:
     @allure.title("Register new user through UI")
     @allure.description("Verify that a new user can register through the registration form")
     @pytest.mark.ui
-    def test_register_new_user(self, page: Page, api_client, api_base_url):
+    def test_register_new_user(self, register_page: RegisterPage):
         """Test successful user registration."""
-        unique_id = f"{int(time.time() * 1000)}"
+        user = UserFactory.ui_user()
 
-        with allure.step("Navigate to registration page"):
-            page.goto(f"{FRONTEND_URL}/register")
-            expect(page).to_have_url(f"{FRONTEND_URL}/register")
-
-        with allure.step("Fill registration form"):
-            page.fill('input[name="username"]', f"ui_user_{unique_id}")
-            page.fill('input[name="email"]', f"ui_user_{unique_id}@example.com")
-            page.fill('input[name="password"]', "TestPass123!")
-
-        with allure.step("Submit registration form"):
-            page.click('button[type="submit"]')
-
-        with allure.step("Verify redirect to login page"):
-            page.wait_for_url(f"{FRONTEND_URL}/login")
-            expect(page).to_have_url(f"{FRONTEND_URL}/login")
-
-        with allure.step("Verify success message"):
-            # Check for success flash message
-            success_message = page.locator(".alert-success")
-            expect(success_message).to_be_visible()
+        register_page.open()
+        register_page.register_and_expect_success(
+            username=user.username,
+            email=user.email,
+            password=user.password,
+        )
 
     @allure.severity(allure.severity_level.NORMAL)
     @allure.title("Registration form validation")
     @allure.description("Verify that registration form validates required fields")
     @pytest.mark.ui
-    def test_register_form_validation(self, page: Page):
+    def test_register_form_validation(self, register_page: RegisterPage):
         """Test registration form validation."""
-        with allure.step("Navigate to registration page"):
-            page.goto(f"{FRONTEND_URL}/register")
-
-        with allure.step("Submit empty form"):
-            page.click('button[type="submit"]')
-
-        with allure.step("Verify form validation"):
-            # HTML5 validation should prevent submission
-            expect(page).to_have_url(f"{FRONTEND_URL}/register")
+        register_page.open()
+        register_page.click_register()
+        register_page.expect_form_validation_error()
 
     @allure.severity(allure.severity_level.NORMAL)
     @allure.title("Navigate to login from registration")
     @allure.description("Verify that user can navigate to login page from registration")
     @pytest.mark.ui
-    def test_navigate_to_login(self, page: Page):
+    def test_navigate_to_login(self, register_page: RegisterPage):
         """Test navigation from registration to login."""
-        with allure.step("Navigate to registration page"):
-            page.goto(f"{FRONTEND_URL}/register")
-
-        with allure.step("Click login link"):
-            page.click('a[href="/login"]')
-
-        with allure.step("Verify redirect to login page"):
-            expect(page).to_have_url(f"{FRONTEND_URL}/login")
+        register_page.open()
+        register_page.go_to_login()
+        register_page.wait_for_navigation(Routes.LOGIN)

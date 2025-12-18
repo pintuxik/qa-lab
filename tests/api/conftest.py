@@ -1,108 +1,46 @@
 """
-Global pytest configuration for API integration testing with Allure.
+API-specific pytest fixtures for integration testing.
+
+Shared fixtures (api_client, api_base_url, credentials) are inherited from
+tests/conftest.py. This file contains only API-specific fixtures:
+- User registration and authentication
+- API client instances (AuthAPI, UsersAPI, TasksAPI)
 
 Environment variables are loaded from .env.test by pytest-dotenv plugin.
-See pyproject.toml [tool.pytest.ini_options] env_files setting.
 """
 
-import os
-
 import allure
-import httpx
 import pytest
 
-# API Configuration - loaded from .env.test
-API_BASE_URL = os.getenv("API_BASE_URL")
-TEST_API_KEY = os.getenv("TEST_API_KEY")
-API_TIMEOUT = float(os.getenv("API_TIMEOUT"))
+from tests.api.clients import AuthAPIClient, TasksAPIClient, UsersAPIClient
 
-
-@pytest.hookimpl(tryfirst=True, hookwrapper=True)
-def pytest_runtest_makereport(item, call):
-    """Hook to capture test results for screenshot on failure."""
-    outcome = yield
-    rep = outcome.get_result()
-    setattr(item, "rep_" + rep.when, rep)
-
-
-@pytest.fixture(autouse=True)
-def allure_environment_info():
-    """Add environment information to Allure report."""
-    allure.dynamic.label("framework", "pytest")
-    allure.dynamic.label("test_type", "api")
-    allure.dynamic.label("api_base_url", API_BASE_URL)
-
-
-@pytest.fixture(scope="session")
-def api_base_url():
-    """Provide the base URL for API requests."""
-    return API_BASE_URL
-
-
-def pytest_sessionfinish(session, exitstatus):
-    """
-    Hook called after all tests complete (including all xdist workers).
-
-    This ensures cleanup happens only once after all parallel workers finish,
-    avoiding race conditions where cleanup deletes users while tests are running.
-    """
-    # Skip cleanup if running in xdist worker process
-    # Only the master process (or non-xdist runs) should do cleanup
-    if hasattr(session.config, "workerinput"):
-        return
-
-    # Cleanup: Delete test users using secure test-cleanup endpoint
-    if TEST_API_KEY:
-        try:
-            with httpx.Client() as api_client:
-                response = api_client.post(
-                    f"{API_BASE_URL}/api/users/test-cleanup",
-                    json={"username_patterns": ["api_user_*"]},
-                    headers={"X-Test-API-Key": TEST_API_KEY},
-                )
-                if response.status_code != 200:
-                    print(f"Warning: Failed to cleanup users: {response.text}")
-        except Exception as e:
-            # Log cleanup failure but don't fail the test run
-            print(f"Warning: Failed to cleanup users by pattern 'api_user_*': {str(e)}")
+# ============================================================================
+# Credential Fixture - Alias for API tests
+# ============================================================================
 
 
 @pytest.fixture(scope="function")
-def api_client():
-    """Provide an httpx client for API calls with global timeout.
+def test_user_credentials(api_test_user_credentials):
+    """Alias api_test_user_credentials for backward compatibility.
 
-    Uses httpx.Client (sync) for consistency with async backend.
-    Benefits over requests:
-    - Better HTTP/2 support
-    - More modern API
-    - Consistent with httpx.AsyncClient if we go async later
-
-    Default timeout of 10 seconds per repo standards.
-    Can be overridden per request by passing timeout parameter.
+    API tests use the 'api_user_' prefix for test users.
     """
-    # httpx.Client with default timeout
-    with httpx.Client(timeout=API_TIMEOUT) as client:
-        yield client
+    return api_test_user_credentials
 
 
-@pytest.fixture(scope="function")
-def test_user_credentials():
-    """Provide truly unique test user credentials per test."""
-    import uuid
-
-    # Use UUID for guaranteed uniqueness across all contexts (parallel, sequential, etc.)
-    unique_id = str(uuid.uuid4())[:8]  # First 8 chars of UUID
-    return {
-        "username": f"api_user_{unique_id}",
-        "email": f"api_user_{unique_id}@example.com",
-        "password": "TestPass123!",
-    }
+# ============================================================================
+# User Registration and Authentication Fixtures
+# ============================================================================
 
 
 @pytest.fixture(scope="function")
 def registered_user(api_client, api_base_url, test_user_credentials):
-    """Create and return a registered test user. Cleans up after test completes."""
-    with allure.step("Register test user"):
+    """Create and return a registered test user.
+
+    Returns dict with credentials and user ID.
+    Cleanup is handled by pytest_sessionfinish in root conftest.
+    """
+    with allure.step(f"Register test user: {test_user_credentials['username']}"):
         response = api_client.post(
             f"{api_base_url}/api/users/",
             json=test_user_credentials,
@@ -119,9 +57,9 @@ def registered_user(api_client, api_base_url, test_user_credentials):
 
 
 @pytest.fixture(scope="function")
-def auth_token(api_client, api_base_url, registered_user):
-    """Get authentication token for registered user."""
-    with allure.step("Login and get auth token"):
+def auth_token(api_client, api_base_url, registered_user) -> str:
+    """Get JWT authentication token for registered user."""
+    with allure.step(f"Login and get auth token: {registered_user['username']}"):
         response = api_client.post(
             f"{api_base_url}/api/auth/login",
             data={
@@ -141,6 +79,73 @@ def auth_token(api_client, api_base_url, registered_user):
 
 @pytest.fixture(scope="function")
 def authenticated_client(api_client, auth_token):
-    """Provide an authenticated API client."""
+    """Provide an httpx client with Authorization header set."""
     api_client.headers.update({"Authorization": f"Bearer {auth_token}"})
     return api_client
+
+
+# ============================================================================
+# API Client Fixtures - Use these for clean, maintainable tests
+# ============================================================================
+
+
+@pytest.fixture(scope="function")
+def auth_api(api_client, api_base_url) -> AuthAPIClient:
+    """Provide AuthAPIClient for authentication tests.
+
+    Example:
+        def test_login(auth_api):
+            response = auth_api.login("user", "password")
+            response.assert_ok()
+    """
+    return AuthAPIClient(api_client, api_base_url)
+
+
+@pytest.fixture(scope="function")
+def users_api(api_client, api_base_url) -> UsersAPIClient:
+    """Provide UsersAPIClient for user management tests.
+
+    Example:
+        def test_register(users_api):
+            response = users_api.register("user", "email@test.com", "password")
+            response.assert_created()
+    """
+    return UsersAPIClient(api_client, api_base_url)
+
+
+@pytest.fixture(scope="function")
+def tasks_api(api_client, api_base_url) -> TasksAPIClient:
+    """Provide unauthenticated TasksAPIClient.
+
+    Use this for testing auth requirements (expect 401 responses).
+
+    Example:
+        def test_tasks_require_auth(tasks_api):
+            response = tasks_api.get_all_tasks()
+            response.assert_unauthorized()
+    """
+    return TasksAPIClient(api_client, api_base_url)
+
+
+@pytest.fixture(scope="function")
+def authenticated_tasks_api(authenticated_client, api_base_url) -> TasksAPIClient:
+    """Provide authenticated TasksAPIClient for task CRUD tests.
+
+    Example:
+        def test_create_task(authenticated_tasks_api):
+            response = authenticated_tasks_api.create_task(title="My Task")
+            response.assert_ok().assert_field_equals("title", "My Task")
+    """
+    return TasksAPIClient(authenticated_client, api_base_url)
+
+
+@pytest.fixture(scope="function")
+def authenticated_users_api(authenticated_client, api_base_url) -> UsersAPIClient:
+    """Provide authenticated UsersAPIClient for protected user endpoints.
+
+    Example:
+        def test_get_current_user(authenticated_users_api):
+            response = authenticated_users_api.get_current_user()
+            response.assert_ok()
+    """
+    return UsersAPIClient(authenticated_client, api_base_url)

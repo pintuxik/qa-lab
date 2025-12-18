@@ -43,6 +43,10 @@ fi
 cd ..
 echo ""
 
+# Adjust number of threads for pytest
+# Run frontend units serially
+export PYTEST_ADDOPTS=""
+
 # Frontend Tests
 echo -e "${BLUE}🎨 Running Frontend Tests...${NC}"
 echo "----------------------------"
@@ -63,6 +67,10 @@ else
 fi
 cd ..
 echo ""
+
+# Adjust number of threads for pytest
+# Run further tests in parallel
+export PYTEST_ADDOPTS="-n auto"
 
 # API Integration Tests
 cd tests || exit
